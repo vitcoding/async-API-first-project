@@ -1,0 +1,15 @@
+__pycache__/
+.vscode/
+.venv/
+*.env
+.idea
+.dockerignore
+.gitignore
+.github
+Dockerfile
+docker-compose.yml
+venv
+
+_temp/
+temp/
+*for_example

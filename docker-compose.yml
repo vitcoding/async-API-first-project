@@ -1,0 +1,56 @@
+name: movie-theatre
+
+services:
+
+  movies-db:
+    image: postgres:16
+    env_file:
+      - ./.env
+    volumes:
+      - movies-database:/var/lib/postgresql/data
+      - ./database_dump.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    restart: always
+
+  elasticsearch:
+    image: elasticsearch:8.6.2
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms2048m -Xmx2048m"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    restart: always
+
+  etl:
+    build: ./postgres_to_es
+    env_file:
+      - ./postgres_to_es/doc.env
+    volumes:
+      - etl-data:/opt/app/data
+    depends_on:
+      - movies-db
+      - elasticsearch
+
+  api-service:
+    build: ./fastapi-solution
+    # env_file:
+    #   - ./postgres_to_es/doc.env
+    # volumes:
+    #   - etl-data:/opt/app/data
+    ports:
+      - "8000:8000"
+    # depends_on:
+    #   - movies-db
+    #   - elasticsearch
+    # restart: always
+
+volumes:
+  movies-database:
+  es-data:
+  etl-data:
+
+
