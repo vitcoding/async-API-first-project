@@ -35,6 +35,15 @@ services:
       - movies-db
       - elasticsearch
 
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - rds-data:/data
+      - redis.conf:/usr/local/etc/redis/redis.conf
+
   api-service:
     build: ./fastapi-solution
     # env_file:
@@ -52,5 +61,7 @@ volumes:
   movies-database:
   es-data:
   etl-data:
+  rds-data:
+  redis.conf:
 
 
