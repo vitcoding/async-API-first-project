@@ -23,8 +23,21 @@ class FilmService:
 
     async def get_film_list(self) -> list[Film]:
         try:
+            size = 50
+            sort_field = "imdb_rating"
+            query_body = {
+                "size": size,
+                "query": {
+                    "match_all": {},
+                },
+                "sort": [
+                    {sort_field: {"order": "desc"}},
+                ],
+            }
             docs = await self.elastic.search(
-                index="movies", body={"query": {"match_all": {}}}
+                index="movies",
+                body=query_body,
+                # index="movies", body={"query": {"match_all": {}}}
             )
             films = [Film(**doc["_source"]) for doc in docs["hits"]["hits"]]
         except NotFoundError:
