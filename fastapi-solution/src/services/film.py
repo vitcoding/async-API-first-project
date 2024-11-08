@@ -21,6 +21,17 @@ class FilmService:
         self.redis = redis
         self.elastic = elastic
 
+    async def get_film_list(self) -> list[Film]:
+        try:
+            docs = await self.elastic.search(
+                index="movies", body={"query": {"match_all": {}}}
+            )
+            films = [Film(**doc["_source"]) for doc in docs["hits"]["hits"]]
+        except NotFoundError:
+            return None
+        # log.info("\ndocs: \n%s\n", docs["hits"]["hits"])
+        return films
+
     # get_by_id возвращает объект фильма. Он опционален, так как фильм может отсутствовать в базе
     async def get_by_id(self, film_id: str) -> Optional[Film]:
         # Пытаемся получить данные из кеша, потому что оно работает быстрее

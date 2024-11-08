@@ -8,7 +8,7 @@ class Film(BaseModel):
     imdb_rating: float
     genres: list
     title: str
-    description: str
+    description: str | None
     directors_names: list
     actors_names: list
     writers_names: list

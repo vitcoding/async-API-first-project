@@ -22,13 +22,22 @@ class Film(BaseModel):
     imdb_rating: float
     genres: list
     title: str
-    description: str
+    description: str | None
     # directors_names: list
     # actors_names: list
     # writers_names: list
     # directors: list
     # actors: list
     # writers: list
+
+
+# @router.get("/", response_model=Film)
+@router.get("/")
+async def film_list(
+    film_service: FilmService = Depends(get_film_service),
+) -> list:
+    films = await film_service.get_film_list()
+    return [Film(**dict(film)) for film in films]
 
 
 # Внедряем FilmService с помощью Depends(get_film_service)
