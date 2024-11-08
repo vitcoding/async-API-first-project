@@ -21,19 +21,46 @@ class FilmService:
         self.redis = redis
         self.elastic = elastic
 
-    async def get_film_list(self) -> list[Film]:
+    async def get_film_list(
+        self,
+        sort_field: str | None,
+        page_size: int,
+        page_number: int,
+        genre_uuid: str | None,
+    ) -> list[Film]:
+
+        print(genre_uuid)
+
+        if sort_field.startswith("-"):
+            sort_field = sort_field[1:]
+            sort_parameters = {"order": "desc"}
+        else:
+            sort_parameters = {"order": "asc"}
+
+        query_body = {
+            "size": page_size,
+            "from": (page_number - 1) * page_size,
+            "sort": [
+                {sort_field: sort_parameters},
+            ],
+            # "query": {},
+            # "query": {
+            #     "match_all": {},
+            # },
+        }
+
+        if genre_uuid is not None:
+            ### Not worksble
+            # query_body["query"] = {
+            #     # "bool": {"filter": {"term": {"genres": genre_uuid}}}
+            #     "bool": {"must": {"terms": {"genres.keyword": ["Drama"]}}}
+            # }
+            ### worksble
+            query_body["query"] = {"match": {"genres": "Drama"}}
+
+        print(query_body)
+
         try:
-            size = 50
-            sort_field = "imdb_rating"
-            query_body = {
-                "size": size,
-                "query": {
-                    "match_all": {},
-                },
-                "sort": [
-                    {sort_field: {"order": "desc"}},
-                ],
-            }
             docs = await self.elastic.search(
                 index="movies",
                 body=query_body,
