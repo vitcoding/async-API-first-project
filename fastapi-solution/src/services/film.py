@@ -10,17 +10,15 @@ from db.elastic import get_elastic
 from db.redis import get_redis
 from models.film import Film
 
-FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут
+FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5
 
 
-# FilmService содержит бизнес-логику по работе с фильмами.
-# Никакой магии тут нет. Обычный класс с обычными методами.
-# Этот класс ничего не знает про DI — максимально сильный и независимый.
 class FilmService:
     def __init__(self, redis: Redis, elastic: AsyncElasticsearch):
         self.redis = redis
         self.elastic = elastic
 
+    # Надо будет добавить кэширование
     async def get_film_list(
         self,
         sort_field: str | None,
@@ -28,8 +26,6 @@ class FilmService:
         page_number: int,
         genre_uuid: str | None,
     ) -> list[Film]:
-
-        print(genre_uuid)
 
         if sort_field.startswith("-"):
             sort_field = sort_field[1:]
@@ -43,92 +39,60 @@ class FilmService:
             "sort": [
                 {sort_field: sort_parameters},
             ],
-            # "query": {},
-            # "query": {
-            #     "match_all": {},
-            # },
         }
 
+        # Надо будет скорректировать после добавления индексов по жанрам
         if genre_uuid is not None:
-            ### Not worksble
-            # query_body["query"] = {
-            #     # "bool": {"filter": {"term": {"genres": genre_uuid}}}
-            #     "bool": {"must": {"terms": {"genres.keyword": ["Drama"]}}}
-            # }
-            ### worksble
             query_body["query"] = {"match": {"genres": "Drama"}}
 
-        print(query_body)
+        log.info("\nquery_body: \n%s\n", query_body)
 
         try:
             docs = await self.elastic.search(
                 index="movies",
                 body=query_body,
-                # index="movies", body={"query": {"match_all": {}}}
             )
             films = [Film(**doc["_source"]) for doc in docs["hits"]["hits"]]
         except NotFoundError:
             return None
-        # log.info("\ndocs: \n%s\n", docs["hits"]["hits"])
+        log.debug("\ndocs: \n%s\n", docs["hits"]["hits"])
         return films
 
-    # get_by_id возвращает объект фильма. Он опционален, так как фильм может отсутствовать в базе
     async def get_by_id(self, film_id: str) -> Optional[Film]:
-        # Пытаемся получить данные из кеша, потому что оно работает быстрее
-        ###
+
         log.info("\nЗапрос фильма по id '%s'\n", film_id)
-        # ###
-        # film = await self._get_film_from_elastic(film_id)
-        # ###
+
         film = await self._film_from_cache(film_id)
         if not film:
-            # Если фильма нет в кеше, то ищем его в Elasticsearch
             film = await self._get_film_from_elastic(film_id)
             if not film:
-                # Если он отсутствует в Elasticsearch, значит, фильма вообще нет в базе
                 return None
-            # Сохраняем фильм в кеш
             await self._put_film_to_cache(film)
 
         return film
 
     async def _get_film_from_elastic(self, film_id: str) -> Optional[Film]:
         try:
-            ###
             log.info("\nПолучение данных из ElasticSearch\n")
             doc = await self.elastic.get(index="movies", id=film_id)
         except NotFoundError:
             return None
-        ###
-        # return doc
-        # return Film(**doc["hits"]["hits"]["_source"])
         return Film(**doc["_source"])
 
     async def _film_from_cache(self, film_id: str) -> Optional[Film]:
-        # Пытаемся получить данные о фильме из кеша, используя команду get
-        # https://redis.io/commands/get/
         data = await self.redis.get(film_id)
         if not data:
             return None
 
-        # pydantic предоставляет удобное API для создания объекта моделей из json
         film = Film.parse_raw(data)
         return film
 
     async def _put_film_to_cache(self, film: Film):
-        # Сохраняем данные о фильме, используя команду set
-        # Выставляем время жизни кеша — 5 минут
-        # https://redis.io/commands/set/
-        # pydantic позволяет сериализовать модель в json
         await self.redis.set(
             film.id, film.json(), FILM_CACHE_EXPIRE_IN_SECONDS
         )
 
 
-# get_film_service — это провайдер FilmService.
-# С помощью Depends он сообщает, что ему необходимы Redis и Elasticsearch
-# Для их получения вы ранее создали функции-провайдеры в модуле db
-# Используем lru_cache-декоратор, чтобы создать объект сервиса в едином экземпляре (синглтона)
 @lru_cache()
 def get_film_service(
     redis: Redis = Depends(get_redis),

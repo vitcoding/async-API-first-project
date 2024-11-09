@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 
 class Film(BaseModel):
+    # Надо будет добавить трансформацию в кэш для id (пока str)
     id: str
     imdb_rating: float
     genres: list
