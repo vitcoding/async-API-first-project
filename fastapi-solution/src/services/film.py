@@ -1,8 +1,9 @@
 from functools import lru_cache
+from http import HTTPStatus
 from typing import Optional
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from redis.asyncio import Redis
 
 from core.config import log
@@ -13,10 +14,29 @@ from models.film import Film
 FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5
 
 
+# class Paginator:
+#     def __init__(self, limit: int = 50, page: int = 1):
+#         self.limit = limit
+#         self.page = page
+
+#     def __call__(self, limit: int):
+#         if limit < self.limit:
+#             return [{"limit": self.limit, "page": self.page}]
+#         else:
+#             return [{"limit": limit, "page": self.page}]
+
+
 class FilmService:
     def __init__(self, redis: Redis, elastic: AsyncElasticsearch):
         self.redis = redis
         self.elastic = elastic
+
+    async def films_count_total(self):
+        index_ = await self.elastic.count(
+            index="movies",
+        )
+        count_total = int(index_["count"])
+        return count_total
 
     # Надо будет добавить кэширование
     async def get_film_list(
@@ -27,17 +47,35 @@ class FilmService:
         genre_uuid: str | None,
     ) -> list[Film]:
 
+        docs_total = await self.films_count_total()
+        pages_total_float = docs_total / page_size
+        pages_total = int(pages_total_float)
+        if pages_total < pages_total_float:
+            pages_total += 1
+
+        if page_number < 1 or page_number > pages_total:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND, detail="page not found"
+            )
+
+        if page_number == pages_total:
+            page_size_last = docs_total - (page_size * (pages_total - 1))
+
         if sort_field.startswith("-"):
             sort_field = sort_field[1:]
-            sort_parameters = {"order": "desc"}
+            order = "desc"
         else:
-            sort_parameters = {"order": "asc"}
+            order = "asc"
 
         query_body = {
-            "size": page_size,
+            "size": (
+                page_size_last if page_number == pages_total else page_size
+            ),
             "from": (page_number - 1) * page_size,
             "sort": [
-                {sort_field: sort_parameters},
+                {
+                    sort_field: {"order": order, "missing": "_last"},
+                }
             ],
         }
 

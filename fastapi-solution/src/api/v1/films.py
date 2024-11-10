@@ -19,7 +19,7 @@ router = APIRouter()
 # Модель ответа API
 class FilmList(BaseModel):
     id: UUID
-    imdb_rating: float
+    imdb_rating: float | None
     title: str
     # genres: list
     # description: str | None
@@ -34,7 +34,7 @@ class FilmList(BaseModel):
 class Film(BaseModel):
     id: UUID
     title: str
-    imdb_rating: float
+    imdb_rating: float | None
     description: str | None
     # Надо будет дополнительно скорректировать
     genres: list
@@ -49,8 +49,10 @@ class Film(BaseModel):
 @router.get("")
 async def film_list(
     sort: str | None = Query("-imdb_rating"),
+    # Продумать ограничение сраниц сверху
     page_size: int = Query(50, ge=1),
-    page_number: int = Query(1, ge=1),
+    # page_number: int = Query(1, ge=1),
+    page_number: int = Query(1),
     genre: str = Query(None),
     film_service: FilmService = Depends(get_film_service),
 ) -> list:
