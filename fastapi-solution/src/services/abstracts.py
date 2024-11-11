@@ -1,6 +1,5 @@
 import json
 from abc import ABC, abstractmethod
-from asyncio import sleep
 from http import HTTPStatus
 from typing import Any, Optional
 
@@ -13,7 +12,8 @@ from models.film import Film, FilmRedis
 from models.genre import Genre, GenreRedis
 from models.person import Person, PersonRedis
 
-CACHE_EXPIRE_IN_SECONDS = 60 * 5
+# CACHE_EXPIRE_IN_SECONDS = 60 * 5
+CACHE_EXPIRE_IN_SECONDS = 1
 
 
 class AbstractService(ABC):
@@ -112,6 +112,7 @@ class AbstractListService(AbstractService):
     ) -> Optional[list | Film]:
         pass
 
+    @abstractmethod
     async def _get_list_from_elastic(
         sself,
         *args,
@@ -130,6 +131,7 @@ class AbstractItemService(AbstractService):
     ) -> Optional[list | Film]:
         pass
 
+    @abstractmethod
     async def _get_item_from_elastic(
         sself,
         *args,

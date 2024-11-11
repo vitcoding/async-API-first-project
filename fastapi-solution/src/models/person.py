@@ -7,6 +7,7 @@ from pydantic import BaseModel
 class Person(BaseModel):
     id: UUID | str
     full_name: str
+    films: list[dict[str, Any]]
 
     def __post_init__(self):
         if isinstance(self.id, str):

@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -15,6 +16,7 @@ router = APIRouter()
 class Person(BaseModel):
     id: UUID
     full_name: str
+    films: list[dict[str, Any]]
 
 
 # @router.get("")
