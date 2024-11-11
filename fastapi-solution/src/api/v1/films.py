@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 # import models.film
 from services.film import FilmService, get_film_service
+from services.films import FilmListService, get_film_list_service
 
 # Объект router, в котором регистрируем обработчики
 router = APIRouter()
@@ -54,7 +55,7 @@ async def film_list(
     # page_number: int = Query(1, ge=1),
     page_number: int = Query(1),
     genre: str = Query(None),
-    film_service: FilmService = Depends(get_film_service),
+    film_service: FilmService = Depends(get_film_list_service),
 ) -> list:
     films = await film_service.get_film_list(
         sort, page_size, page_number, genre
