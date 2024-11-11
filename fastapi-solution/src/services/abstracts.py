@@ -11,6 +11,7 @@ from redis.asyncio import Redis
 from core.config import log
 from models.film import Film, FilmRedis
 from models.genre import Genre, GenreRedis
+from models.person import Person, PersonRedis
 
 CACHE_EXPIRE_IN_SECONDS = 60 * 5
 
@@ -22,8 +23,7 @@ class AbstractService(ABC):
         self._models = {
             "film": Film,
             "genre": Genre,
-            # After models add
-            "person": "Person",
+            "person": Person,
         }
 
     async def _get_from_cache(
