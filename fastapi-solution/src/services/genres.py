@@ -16,21 +16,16 @@ class GenreListService(AbstractListService):
 
     async def get_list(
         self,
-        # sort_field: str | None,
         page_size: int,
         page_number: int,
     ) -> Optional[list[Genre]]:
 
         log.info("\nGetting genres.\n")
 
-        # key = f"{sort_field}, {page_size}, {page_number}"
         key = f"{page_size}, {page_number}"
         genres = await self._get_from_cache(key, "genre", is_list=True)
         if not genres:
             genres = await self._get_list_from_elastic(page_size, page_number)
-            # genres = await self._get_list_from_elastic(
-            #     sort_field, page_size, page_number
-            # )
             if not genres:
                 return None
 
@@ -40,7 +35,6 @@ class GenreListService(AbstractListService):
 
     async def _get_list_from_elastic(
         self,
-        # sort_field: str | None,
         page_size: int,
         page_number: int,
     ) -> Optional[list[Genre]]:
@@ -52,18 +46,9 @@ class GenreListService(AbstractListService):
             docs_total, page_number, pages_total, page_size
         )
 
-        # order = ("asc", "desc")[sort_field.startswith("-")]
-        # if order == "desc":
-        #     sort_field = sort_field[1:]
-
         query_body = {
             "size": (page_size),
             "from": (page_number - 1) * page_size,
-            # "sort": [
-            #     {
-            #         sort_field: {"order": order, "missing": "_last"},
-            #     }
-            # ],
         }
 
         log.info("\nquery_body: \n%s\n", query_body)

@@ -11,8 +11,6 @@ from db.redis import get_redis
 from models.film import Film
 from services.abstracts import AbstractItemService
 
-FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5
-
 
 class FilmService(AbstractItemService):
 
