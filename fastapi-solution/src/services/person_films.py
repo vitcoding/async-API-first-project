@@ -13,21 +13,31 @@ from models.person import Person
 from services.abstracts import AbstractItemService
 
 
-class PersonService(AbstractItemService):
+class PersonFilmListService(AbstractItemService):
 
     async def get_by_id(self, person_id: str) -> Optional[Person]:
 
         log.info("\nGetting person '%s'.\n", person_id)
 
-        person = await self._get_from_cache(str(person_id), "person")
-        if not person:
-            person = await self._get_item_from_elastic(person_id)
+        person_films = await self._get_from_cache(
+            str(person_id) + "_films", "film"
+        )
+        if not person_films:
+            person_films = await self._get_item_from_elastic(person_id)
 
-            if not person:
+            # # print(person)
+            # print(type(person))
+            # for p in person:
+            #     print(p)
+
+            if not person_films:
                 return None
-            await self._put_to_cache(str(person_id), person, "person")
 
-        return person
+            await self._put_to_cache(
+                str(person_id) + "_films", person_films, "film"
+            )
+
+        return person_films
 
     async def _get_item_from_elastic(self, person_id: str) -> Optional[Person]:
         try:
@@ -38,16 +48,24 @@ class PersonService(AbstractItemService):
 
         except NotFoundError:
             return None
-        person = Person(**doc["_source"], films=films_person)
+        # person_films = [Film(**film) for film in films_person]
 
-        return person
+        return films_person
+        # return person_films
 
     async def _get_person_films(self, person_id):
         index_ = "movies"
-        # sort_field = "imdb_rating"
-        # order = "desc"
+        sort_field = "imdb_rating"
+        order = "desc"
 
         query_body = {
+            # "size": (page_size),
+            # "from": (page_number - 1) * page_size,
+            "sort": [
+                {
+                    sort_field: {"order": order, "missing": "_last"},
+                }
+            ],
             "query": {
                 "bool": {
                     "should": [
@@ -71,7 +89,7 @@ class PersonService(AbstractItemService):
                         },
                     ]
                 }
-            }
+            },
         }
 
         try:
@@ -84,29 +102,14 @@ class PersonService(AbstractItemService):
         except NotFoundError:
             return None
 
-        films_person = []
-        for film in films:
-            film_temp, roles_temp = {}, []
-            for key, value in dict(film).items():
-                match key:
-                    case "id":
-                        film_temp[key] = value
-                    case "directors" | "actors" | "writers":
-                        for item in value:
-                            if item["id"] == person_id:
-                                roles_temp.append(key[:-1])
-            film_temp["roles"] = sorted(roles_temp)
+        log.debug("\nfilms_person: \n%s\n", films)
 
-            films_person.append(film_temp)
-
-        log.debug("\nfilms_person: \n%s\n", films_person)
-
-        return films_person
+        return films
 
 
 @lru_cache()
-def get_person_service(
+def get_person_film_list_service(
     redis: Redis = Depends(get_redis),
     elastic: AsyncElasticsearch = Depends(get_elastic),
-) -> PersonService:
-    return PersonService(redis, elastic)
+) -> PersonFilmListService:
+    return PersonFilmListService(redis, elastic)
