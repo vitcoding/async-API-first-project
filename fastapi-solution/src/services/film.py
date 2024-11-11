@@ -38,19 +38,6 @@ class FilmService(AbstractItemService):
             return None
         return Film(**doc["_source"])
 
-    # async def _film_from_cache(self, film_id: str) -> Optional[Film]:
-    #     data = await self.redis.get(film_id)
-    #     if not data:
-    #         return None
-
-    #     film = Film.parse_raw(data)
-    #     return film
-
-    # async def _put_film_to_cache(self, film: Film):
-    #     await self.redis.set(
-    #         film.id, film.json(), FILM_CACHE_EXPIRE_IN_SECONDS
-    #     )
-
 
 @lru_cache()
 def get_film_service(

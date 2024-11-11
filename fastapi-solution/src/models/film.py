@@ -5,8 +5,7 @@ from pydantic import BaseModel
 
 
 class Film(BaseModel):
-    # Надо будет добавить трансформацию в кэш для id (пока str)
-    id: UUID
+    id: UUID | str
     imdb_rating: float | None
     genres: list[str] | None
     title: str
@@ -17,3 +16,13 @@ class Film(BaseModel):
     directors: list[dict[str, Any]] | None
     actors: list[dict[str, Any]] | None
     writers: list[dict[str, Any]] | None
+
+    def __post_init__(self):
+        if isinstance(self.id, str):
+            self.id = str(self.id)
+
+
+class FilmRedis(Film):
+    def __post_init__(self):
+        if isinstance(self.id, UUID):
+            self.id = str(self.id)

@@ -1,3 +1,4 @@
+import json
 from abc import ABC, abstractmethod
 from asyncio import sleep
 from http import HTTPStatus
@@ -8,9 +9,9 @@ from fastapi import HTTPException
 from redis.asyncio import Redis
 
 from core.config import log
-from models.film import Film
+from models.film import Film, FilmRedis
 
-FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5
+CACHE_EXPIRE_IN_SECONDS = 60 * 5
 
 
 class AbstractService(ABC):
@@ -35,13 +36,14 @@ class AbstractService(ABC):
 
         if is_list:
 
-            data = await self.redis.lrange(key, 0, -1)
+            data = await self.redis.get(key)
             if not data:
                 return None
 
             log.info("\nGetting data from redis.\n")
-            collection = [object_.parse_raw(row) for row in data]
+            collection = [object_(**row) for row in json.loads(data.decode())]
             return collection
+
         else:
             data = await self.redis.get(key)
             if not data:
@@ -58,33 +60,14 @@ class AbstractService(ABC):
     ) -> None:
 
         if isinstance(data, list):
-            await self.redis.delete(key)
-            for item in data:
-                await self.redis.rpush(
-                    key,
-                    item.json(),
-                )
-            while True:
-                try:
-                    await self.redis.setex(
-                        key,
-                        FILM_CACHE_EXPIRE_IN_SECONDS,
-                    )
-                    log.info("\nThe data is placed in redis.\n")
-                except TypeError as err:
-                    log.info(
-                        "\nError '%s': \n%s\n",
-                        type(err),
-                        err,
-                    )
-                if bool(await self.redis.exists(key)):
-                    log.info("\nAn array key created.\n")
-                    break
-                await sleep(0.1)
-        else:
-            await self.redis.set(
-                key, data.json(), FILM_CACHE_EXPIRE_IN_SECONDS
+            serialized_data = json.dumps(
+                [dict(FilmRedis(**dict(item))) for item in data]
             )
+            await self.redis.set(key, serialized_data, CACHE_EXPIRE_IN_SECONDS)
+            log.info("\nThe data is placed in redis.\n")
+
+        else:
+            await self.redis.set(key, data.json(), CACHE_EXPIRE_IN_SECONDS)
             log.info("\nThe data is placed in redis.\n")
 
 
