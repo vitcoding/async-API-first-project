@@ -4,17 +4,11 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
-# import models.film
 from services.film import FilmService, get_film_service
 from services.films import FilmListService, get_film_list_service
 
 # Объект router, в котором регистрируем обработчики
 router = APIRouter()
-
-# FastAPI в качестве моделей использует библиотеку pydantic
-# https://pydantic-docs.helpmanual.io
-# У неё есть встроенные механизмы валидации, сериализации и десериализации
-# Также она основана на дата-классах
 
 
 # Модель ответа API
@@ -50,12 +44,10 @@ class Film(BaseModel):
 @router.get("")
 async def film_list(
     sort: str | None = Query("-imdb_rating"),
-    # Продумать ограничение сраниц сверху
     page_size: int = Query(50, ge=1),
-    # page_number: int = Query(1, ge=1),
     page_number: int = Query(1),
     genre: str = Query(None),
-    film_service: FilmService = Depends(get_film_list_service),
+    film_service: FilmListService = Depends(get_film_list_service),
 ) -> list:
     films = await film_service.get_list(sort, page_size, page_number, genre)
     return [FilmList(**dict(film)) for film in films]

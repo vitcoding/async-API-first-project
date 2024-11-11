@@ -1,9 +1,8 @@
 from functools import lru_cache
-from http import HTTPStatus
 from typing import Optional
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 from redis.asyncio import Redis
 
 from core.config import log
@@ -26,7 +25,7 @@ class FilmService(AbstractItemService):
             film = await self._get_item_from_elastic(film_id)
             if not film:
                 return None
-            await self._put_to_cache(str(film_id), film)
+            await self._put_to_cache(str(film_id), film, "film")
 
         return film
 

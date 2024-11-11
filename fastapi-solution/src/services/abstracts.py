@@ -10,6 +10,7 @@ from redis.asyncio import Redis
 
 from core.config import log
 from models.film import Film, FilmRedis
+from models.genre import Genre, GenreRedis
 
 CACHE_EXPIRE_IN_SECONDS = 60 * 5
 
@@ -18,6 +19,12 @@ class AbstractService(ABC):
     def __init__(self, redis: Redis, elastic: AsyncElasticsearch):
         self.redis = redis
         self.elastic = elastic
+        self._models = {
+            "film": Film,
+            "genre": Genre,
+            # After models add
+            "person": "Person",
+        }
 
     async def _get_from_cache(
         self,
@@ -26,13 +33,7 @@ class AbstractService(ABC):
         is_list: bool = False,
     ) -> Optional[list | Film]:
 
-        models = {
-            "film": Film,
-            # After models add
-            "genre": "Genre",
-            "person": "Person",
-        }
-        object_ = models[model]
+        object_ = self._models[model]
 
         if is_list:
 
@@ -54,14 +55,14 @@ class AbstractService(ABC):
             return item
 
     async def _put_to_cache(
-        self,
-        key: str,
-        data: list | Film,
+        self, key: str, data: list | Film, model: str
     ) -> None:
+
+        object_ = self._models[model]
 
         if isinstance(data, list):
             serialized_data = json.dumps(
-                [dict(FilmRedis(**dict(item))) for item in data]
+                [dict(object_(**dict(item))) for item in data]
             )
             await self.redis.set(key, serialized_data, CACHE_EXPIRE_IN_SECONDS)
             log.info("\nThe data is placed in redis.\n")

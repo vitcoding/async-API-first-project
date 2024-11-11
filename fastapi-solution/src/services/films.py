@@ -8,7 +8,7 @@ from redis.asyncio import Redis
 from core.config import log
 from db.elastic import get_elastic
 from db.redis import get_redis
-from models.film import Film, FilmRedis
+from models.film import Film
 from services.abstracts import AbstractListService
 
 
@@ -20,7 +20,7 @@ class FilmListService(AbstractListService):
         page_size: int,
         page_number: int,
         genre_uuid: str | None,
-    ) -> Optional[list | Film]:
+    ) -> Optional[list[Film]]:
 
         log.info("\nGetting films.\n")
 
@@ -33,7 +33,7 @@ class FilmListService(AbstractListService):
             if not films:
                 return None
 
-            await self._put_to_cache(key, films)
+            await self._put_to_cache(key, films, "film")
 
         return films
 
@@ -43,7 +43,7 @@ class FilmListService(AbstractListService):
         page_size: int,
         page_number: int,
         genre_uuid: str | None,
-    ) -> list[Film]:
+    ) -> Optional[list[Film]]:
 
         index_ = "movies"
         docs_total = await self._docs_total(index_)
