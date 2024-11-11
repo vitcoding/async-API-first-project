@@ -18,6 +18,78 @@ class AbstractService(ABC):
         self.redis = redis
         self.elastic = elastic
 
+    async def _get_from_cache(
+        self,
+        key: str,
+        model: str,
+        is_list: bool = False,
+    ) -> Optional[list | Film]:
+
+        models = {
+            "film": Film,
+            # After models add
+            "genre": "Genre",
+            "person": "Person",
+        }
+        object_ = models[model]
+
+        if is_list:
+
+            data = await self.redis.lrange(key, 0, -1)
+            if not data:
+                return None
+
+            log.info("\nGetting data from redis.\n")
+            collection = [object_.parse_raw(row) for row in data]
+            return collection
+        else:
+            data = await self.redis.get(key)
+            if not data:
+                return None
+
+            log.info("\nGetting data from redis.\n")
+            item = object_.parse_raw(data)
+            return item
+
+    async def _put_to_cache(
+        self,
+        key: str,
+        data: list | Film,
+    ) -> None:
+
+        if isinstance(data, list):
+            await self.redis.delete(key)
+            for item in data:
+                await self.redis.rpush(
+                    key,
+                    item.json(),
+                )
+            while True:
+                try:
+                    await self.redis.setex(
+                        key,
+                        FILM_CACHE_EXPIRE_IN_SECONDS,
+                    )
+                    log.info("\nThe data is placed in redis.\n")
+                except TypeError as err:
+                    log.info(
+                        "\nError '%s': \n%s\n",
+                        type(err),
+                        err,
+                    )
+                if bool(await self.redis.exists(key)):
+                    log.info("\nAn array key created.\n")
+                    break
+                await sleep(0.1)
+        else:
+            await self.redis.set(
+                key, data.json(), FILM_CACHE_EXPIRE_IN_SECONDS
+            )
+            log.info("\nThe data is placed in redis.\n")
+
+
+class AbstractListService(AbstractService):
+
     async def _docs_total(self, index_: str) -> int:
         data = await self.elastic.count(
             index=index_,
@@ -49,79 +121,34 @@ class AbstractService(ABC):
         return page_size
 
     @abstractmethod
-    async def get_film_list(
+    async def get_list(
         self,
         *args,
         **kwargs,
     ) -> Optional[list | Film]:
         pass
 
-    async def _get_films_from_elastic(
+    async def _get_list_from_elastic(
         sself,
         *args,
         **kwargs,
     ) -> Optional[list | Film]:
         pass
 
-    async def _get_from_cache(
+
+class AbstractItemService(AbstractService):
+
+    @abstractmethod
+    async def get_by_id(
         self,
-        key: str,
-        model: str,
-        is_list: bool = False,
+        *args,
+        **kwargs,
     ) -> Optional[list | Film]:
-        if is_list:
-            models = {
-                "film": Film,
-                # After models add
-                "genre": "Genre",
-                "person": "Person",
-            }
-            object_ = models[model]
+        pass
 
-            data = await self.redis.lrange(key, 0, -1)
-            if not data:
-                return None
-
-            collection = [object_.parse_raw(row) for row in data]
-            return collection
-        else:
-            data = await self.redis.get(key)
-            if not data:
-                return None
-
-            item = object_.parse_raw(data)
-            return item
-
-    async def _put_to_cache(
-        self,
-        key: str,
-        data: list | Film,
-    ) -> None:
-
-        if isinstance(data, list):
-            await self.redis.delete(key)
-            for item in data:
-                await self.redis.rpush(
-                    key,
-                    item.json(),
-                )
-            while True:
-                try:
-                    await self.redis.setex(
-                        key,
-                        FILM_CACHE_EXPIRE_IN_SECONDS,
-                    )
-                except TypeError as err:
-                    log.info(
-                        "\nError '%s': \n%s\n",
-                        type(err),
-                        err,
-                    )
-                if bool(await self.redis.exists(key)):
-                    log.info("\nAn array key created.\n")
-                    break
-                await sleep(0.1)
-        else:
-            await self.redis.set(
-                key, data.json(), FILM_CACHE_EXPIRE_IN_SECONDS
-            )
+    async def _get_item_from_elastic(
+        sself,
+        *args,
+        **kwargs,
+    ) -> Optional[list | Film]:
+        pass

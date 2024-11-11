@@ -1,13 +1,12 @@
 from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel
-
-# from uuid import UUID
 
 
 class Film(BaseModel):
     # Надо будет добавить трансформацию в кэш для id (пока str)
-    id: str
+    id: UUID
     imdb_rating: float | None
     genres: list[str] | None
     title: str

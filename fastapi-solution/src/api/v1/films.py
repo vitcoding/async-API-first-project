@@ -57,9 +57,7 @@ async def film_list(
     genre: str = Query(None),
     film_service: FilmService = Depends(get_film_list_service),
 ) -> list:
-    films = await film_service.get_film_list(
-        sort, page_size, page_number, genre
-    )
+    films = await film_service.get_list(sort, page_size, page_number, genre)
     return [FilmList(**dict(film)) for film in films]
 
 

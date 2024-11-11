@@ -9,12 +9,12 @@ from core.config import log
 from db.elastic import get_elastic
 from db.redis import get_redis
 from models.film import Film
-from services.abstracts import AbstractService
+from services.abstracts import AbstractListService
 
 
-class FilmListService(AbstractService):
+class FilmListService(AbstractListService):
 
-    async def get_film_list(
+    async def get_list(
         self,
         sort_field: str | None,
         page_size: int,
@@ -27,7 +27,7 @@ class FilmListService(AbstractService):
         key = f"{sort_field}, {page_size}, {page_number}, {genre_uuid}"
         films = await self._get_from_cache(key, "film", is_list=True)
         if not films:
-            films = await self._get_films_from_elastic(
+            films = await self._get_list_from_elastic(
                 sort_field, page_size, page_number, genre_uuid
             )
             if not films:
@@ -36,7 +36,7 @@ class FilmListService(AbstractService):
 
         return films
 
-    async def _get_films_from_elastic(
+    async def _get_list_from_elastic(
         self,
         sort_field: str | None,
         page_size: int,
