@@ -11,7 +11,7 @@ from db.redis import get_redis
 from models.film import Film
 from models.person import Person, PersonBase
 from services.abstracts import AbstractListService
-from services.es_queries import common, persons_in_films
+from services.es_queries import common
 from services.tools.person_films_dict import films_dict
 
 
@@ -83,9 +83,15 @@ class PersonListSearchService(AbstractListService):
 
             persons = []
             for person in persons_query:
+                person_id = dict(person)["id"]
+                films = [
+                    dict(film)
+                    for film in await self._get_person_films(person_id)
+                ]
+                films_person = films_dict(person_id, films)
                 person_temp = Person(
                     **dict(person),
-                    films=await self._get_person_films(dict(person)["id"]),
+                    films=films_person,
                 )
                 persons.append(person_temp)
 

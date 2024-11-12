@@ -12,10 +12,8 @@ from models.film import Film
 from models.genre import Genre
 from models.person import Person
 from services.es_queries import common, persons_in_films
-from services.tools.person_films_dict import films_dict
 
-# CACHE_EXPIRE_IN_SECONDS = 60 * 5
-CACHE_EXPIRE_IN_SECONDS = 1
+CACHE_EXPIRE_IN_SECONDS = 60 * 5
 
 
 class AbstractService(ABC):
@@ -35,7 +33,7 @@ class AbstractService(ABC):
         key: str,
         model: str,
         is_list: bool = False,
-    ) -> Optional[list | Film]:
+    ) -> Optional[Any]:
         """Метод плучения данных из кеша."""
 
         object_ = self._models[model]
@@ -91,13 +89,12 @@ class AbstractService(ABC):
                 index=index_,
                 body=query_body,
             )
-            films = [
-                dict(Film(**doc["_source"])) for doc in docs["hits"]["hits"]
+            films_person = [
+                Film(**doc["_source"]) for doc in docs["hits"]["hits"]
             ]
+
         except NotFoundError:
             return None
-
-        films_person = films_dict(person_id, films)
 
         log.debug("\nfilms_person: \n%s\n", films_person)
 
@@ -133,6 +130,7 @@ class AbstractListService(AbstractService):
         page_size: int,
     ) -> int:
         """Метод валидации количества страниц."""
+
         if page_number < 1 or page_number > pages_total:
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND, detail="page not found"
@@ -147,7 +145,7 @@ class AbstractListService(AbstractService):
         self,
         *args,
         **kwargs,
-    ) -> Optional[list | Film]:
+    ) -> Optional[Any]:
         """Абстрактный метод получения списка элементов."""
         pass
 
@@ -156,7 +154,7 @@ class AbstractListService(AbstractService):
         sself,
         *args,
         **kwargs,
-    ) -> Optional[list | Film]:
+    ) -> Optional[Any]:
         """Абстрактный метод получения списка элементов из elasticsearch."""
         pass
 
@@ -168,7 +166,7 @@ class AbstractItemService(AbstractService):
         self,
         *args,
         **kwargs,
-    ) -> Optional[list | Film]:
+    ) -> Optional[Any]:
         """Абстрактный метод получения элемента по id."""
         pass
 
@@ -177,6 +175,6 @@ class AbstractItemService(AbstractService):
         sself,
         *args,
         **kwargs,
-    ) -> Optional[list | Film]:
+    ) -> Optional[Any]:
         """Абстрактный метод получения элемента по id из elasticsearch."""
         pass

@@ -38,7 +38,7 @@ class Film(BaseModel):
     "/",
     response_model=List[FilmList],
     summary="Список кинопроизведений",
-    description="Постраничный список кинопроизведениям",
+    description="Постраничный список кинопроизведений",
     response_description="Название и рейтинг киопроизведения",
     tags=["Список кинопроизведений"],
 )
@@ -59,10 +59,10 @@ async def film_list(
 
 @router.get(
     "/search",
-    response_model=List[Film],
+    response_model=List[FilmList],
     summary="Поиск кинопроизведений",
     description="Полнотекстовый поиск по кинопроизведениям",
-    response_description="Название и рейтинг киопроизведения",
+    response_description="Название и рейтинг кинопроизведения",
     tags=["Полнотекстовый поиск"],
 )
 async def search_film_list(

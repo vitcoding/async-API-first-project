@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Any, Optional
+from typing import Optional
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
@@ -10,6 +10,7 @@ from db.elastic import get_elastic
 from db.redis import get_redis
 from models.person import Person
 from services.abstracts import AbstractItemService
+from services.tools.person_films_dict import films_dict
 
 
 class PersonService(AbstractItemService):
@@ -36,8 +37,11 @@ class PersonService(AbstractItemService):
             log.info("\nGetting person from elasticsearch\n")
             doc = await self.elastic.get(index="persons", id=person_id)
 
-            films_person = await self._get_person_films(person_id)
+            films = [
+                dict(film) for film in await self._get_person_films(person_id)
+            ]
 
+            films_person = films_dict(person_id, films)
         except NotFoundError:
             return None
         person = Person(**doc["_source"], films=films_person)

@@ -15,17 +15,17 @@ from services.persons_search import (
     get_person_list_search_service,
 )
 
-from .films import FilmList
-
 router = APIRouter()
 
 
+# Модель ответа API (персона)
 class Person(BaseModel):
     id: UUID
     full_name: str
     films: list[dict[str, Any]]
 
 
+# Модель ответа API (кинопроизведения персоны)
 class PersonFilmList(BaseModel):
     id: UUID
     title: str
@@ -77,7 +77,7 @@ async def person_details(
 
 @router.get(
     "/{person_id}/film",
-    response_model=List[FilmList],
+    response_model=List[PersonFilmList],
     summary="Список кинопроизведений персоны",
     description="Список кинопроизведений персоны",
     response_description="Название и рейтинг киопроизведения",
@@ -94,4 +94,4 @@ async def person_film_list(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="person films not found"
         )
-    return [PersonFilmList(**dict(person)) for person in person_films]
+    return [PersonFilmList(**dict(film)) for film in person_films]
