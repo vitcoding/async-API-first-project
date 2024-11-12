@@ -14,6 +14,7 @@ from services.es_queries import common
 
 
 class FilmListService(AbstractListService):
+    """Класс для работы со списком кинопроизведений."""
 
     async def get_list(
         self,
@@ -22,6 +23,7 @@ class FilmListService(AbstractListService):
         page_number: int,
         genre_uuid: str | None,
     ) -> Optional[list[Film]]:
+        """Основной метод получения списка кинопроизведений."""
 
         log.info("\nGetting films.\n")
 
@@ -45,6 +47,7 @@ class FilmListService(AbstractListService):
         page_number: int,
         genre_uuid: str | None,
     ) -> Optional[list[Film]]:
+        """Метод получения списка кинопроизведений из elasticsearch."""
 
         index_ = "movies"
         docs_total = await self._docs_total(index_)
@@ -55,9 +58,12 @@ class FilmListService(AbstractListService):
 
         query_body = common.get_query(page_size, page_number, sort_field)
 
-        # Надо будет скорректировать после добавления индексов по жанрам
         if genre_uuid is not None:
-            query_body["query"] = {"match": {"genres": "Drama"}}
+            genre_name = await self._get_genre_name_from_id(genre_uuid)
+            if genre_name is None:
+                return None
+
+            query_body["query"] = {"match": {"genres": genre_name}}
 
         log.info("\nquery_body: \n%s\n", query_body)
 
@@ -73,10 +79,32 @@ class FilmListService(AbstractListService):
         log.debug("\ndocs: \n%s\n", docs["hits"]["hits"])
         return films
 
+    async def _get_genre_name_from_id(self, genre_id):
+        """Метод получения названия жанра по id"""
+        index_ = "genres"
+        query_body = common.get_query()
+        query_body["query"] = {"match": {"id": genre_id}}
+        try:
+            log.info("\nGeting films from elasticsearch\n")
+            docs = await self.elastic.search(
+                index=index_,
+                body=query_body,
+            )
+            if not docs["hits"]["hits"]:
+                return None
+
+        except NotFoundError:
+            return None
+
+        genre_name = docs["hits"]["hits"][0]["_source"]["name"]
+
+        return genre_name
+
 
 @lru_cache()
 def get_film_list_service(
     redis: Redis = Depends(get_redis),
     elastic: AsyncElasticsearch = Depends(get_elastic),
 ) -> FilmListService:
+    """Провайдер FilmListService."""
     return FilmListService(redis, elastic)

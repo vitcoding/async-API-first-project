@@ -13,8 +13,10 @@ from services.abstracts import AbstractItemService
 
 
 class FilmService(AbstractItemService):
+    """Класс для работы с кинопроизведением"""
 
     async def get_by_id(self, film_id: str) -> Optional[Film]:
+        """Основной метод получения кинопроизведения по id."""
 
         log.info("\nGetting film '%s'.\n", film_id)
 
@@ -28,6 +30,8 @@ class FilmService(AbstractItemService):
         return film
 
     async def _get_item_from_elastic(self, film_id: str) -> Optional[Film]:
+        """Метод получения кинопроизведения по id из elasticsearch."""
+
         try:
             log.info("\nGetting film from elasticsearch\n")
             doc = await self.elastic.get(index="movies", id=film_id)
@@ -41,4 +45,5 @@ def get_film_service(
     redis: Redis = Depends(get_redis),
     elastic: AsyncElasticsearch = Depends(get_elastic),
 ) -> FilmService:
+    """Провайдер FilmService."""
     return FilmService(redis, elastic)

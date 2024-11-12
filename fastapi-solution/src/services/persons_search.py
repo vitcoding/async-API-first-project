@@ -16,6 +16,7 @@ from services.tools.person_films_dict import films_dict
 
 
 class PersonListSearchService(AbstractListService):
+    """Класс для полнотекстового поиска персон."""
 
     async def get_list(
         self,
@@ -23,6 +24,7 @@ class PersonListSearchService(AbstractListService):
         page_size: int,
         page_number: int,
     ) -> Optional[list[Film]]:
+        """Основной метод получения списка персон."""
 
         log.info("\nGetting persons.\n")
 
@@ -46,6 +48,7 @@ class PersonListSearchService(AbstractListService):
         page_size: int,
         page_number: int,
     ) -> Optional[list[Person]]:
+        """Метод получения списка персон из elasticsearch."""
 
         index_ = "persons"
         docs_total = await self._docs_total(index_)
@@ -91,34 +94,11 @@ class PersonListSearchService(AbstractListService):
         log.debug("\ndocs: \n%s\n", docs["hits"]["hits"])
         return persons
 
-    async def _get_person_films(self, person_id):
-        index_ = "movies"
-
-        query_body = common.get_query()
-        query_body["query"] = persons_in_films.get_query(person_id)
-
-        try:
-            log.info("\nGeting films from elasticsearch\n")
-            docs = await self.elastic.search(
-                index=index_,
-                body=query_body,
-            )
-            films = [
-                dict(Film(**doc["_source"])) for doc in docs["hits"]["hits"]
-            ]
-        except NotFoundError:
-            return None
-
-        films_person = films_dict(person_id, films)
-
-        log.debug("\nfilms_person: \n%s\n", films_person)
-
-        return films_person
-
 
 @lru_cache()
 def get_person_list_search_service(
     redis: Redis = Depends(get_redis),
     elastic: AsyncElasticsearch = Depends(get_elastic),
 ) -> PersonListSearchService:
+    """PersonListSearchService."""
     return PersonListSearchService(redis, elastic)

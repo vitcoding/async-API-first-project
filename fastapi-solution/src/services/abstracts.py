@@ -19,6 +19,8 @@ CACHE_EXPIRE_IN_SECONDS = 1
 
 
 class AbstractService(ABC):
+    """Базовый абстрактный класс."""
+
     def __init__(self, redis: Redis, elastic: AsyncElasticsearch):
         self.redis = redis
         self.elastic = elastic
@@ -34,6 +36,7 @@ class AbstractService(ABC):
         model: str,
         is_list: bool = False,
     ) -> Optional[list | Film]:
+        """Метод плучения данных из кеша."""
 
         object_ = self._models[model]
 
@@ -59,6 +62,7 @@ class AbstractService(ABC):
     async def _put_to_cache(
         self, key: str, data: list | Film, model: str
     ) -> None:
+        """Метод сохранения данных в кеше."""
 
         object_ = self._models[model]
 
@@ -74,6 +78,8 @@ class AbstractService(ABC):
             log.info("\nThe data is placed in redis.\n")
 
     async def _get_person_films(self, person_id: str) -> list[dict[str, Any]]:
+        """Метод сборки кинопроизведений по персоне."""
+
         index_ = "movies"
 
         query_body = common.get_query()
@@ -99,8 +105,11 @@ class AbstractService(ABC):
 
 
 class AbstractListService(AbstractService):
+    """Абстрактный класс для работы со списком сущностей."""
 
     async def _docs_total(self, index_: str) -> int:
+        """Метод получения количества документов в индексе elasticsearch."""
+
         data = await self.elastic.count(
             index=index_,
         )
@@ -108,6 +117,8 @@ class AbstractListService(AbstractService):
         return docs_total
 
     async def _pages_total(self, docs_total: int, page_size: int) -> int:
+        """Метод определения суммарного количества страниц."""
+
         pages_total_float = docs_total / page_size
         pages_total = int(pages_total_float)
         if pages_total < pages_total_float:
@@ -121,6 +132,7 @@ class AbstractListService(AbstractService):
         pages_total: int,
         page_size: int,
     ) -> int:
+        """Метод валидации количества страниц."""
         if page_number < 1 or page_number > pages_total:
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND, detail="page not found"
@@ -136,6 +148,7 @@ class AbstractListService(AbstractService):
         *args,
         **kwargs,
     ) -> Optional[list | Film]:
+        """Абстрактный метод получения списка элементов."""
         pass
 
     @abstractmethod
@@ -144,6 +157,7 @@ class AbstractListService(AbstractService):
         *args,
         **kwargs,
     ) -> Optional[list | Film]:
+        """Абстрактный метод получения списка элементов из elasticsearch."""
         pass
 
 
@@ -155,6 +169,7 @@ class AbstractItemService(AbstractService):
         *args,
         **kwargs,
     ) -> Optional[list | Film]:
+        """Абстрактный метод получения элемента по id."""
         pass
 
     @abstractmethod
@@ -163,4 +178,5 @@ class AbstractItemService(AbstractService):
         *args,
         **kwargs,
     ) -> Optional[list | Film]:
+        """Абстрактный метод получения элемента по id из elasticsearch."""
         pass

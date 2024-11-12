@@ -13,6 +13,7 @@ from services.abstracts import AbstractListService
 
 
 class FilmListSearchService(AbstractListService):
+    """Класс для работы с поиском кинопроизведений."""
 
     async def get_list(
         self,
@@ -20,6 +21,7 @@ class FilmListSearchService(AbstractListService):
         page_size: int,
         page_number: int,
     ) -> Optional[list[Film]]:
+        """Основной метод получения списка кинопроизведений."""
 
         log.info("\nGetting films.\n")
 
@@ -42,6 +44,7 @@ class FilmListSearchService(AbstractListService):
         page_size: int,
         page_number: int,
     ) -> Optional[list[Film]]:
+        """Метод получения списка кинопроизведений из elasticsearch."""
 
         index_ = "movies"
         docs_total = await self._docs_total(index_)
@@ -77,7 +80,9 @@ class FilmListSearchService(AbstractListService):
                 index=index_,
                 body=query_body,
             )
+
             films = [Film(**doc["_source"]) for doc in docs["hits"]["hits"]]
+
         except NotFoundError:
             return None
         log.debug("\ndocs: \n%s\n", docs["hits"]["hits"])
@@ -89,4 +94,5 @@ def get_film_list_search_service(
     redis: Redis = Depends(get_redis),
     elastic: AsyncElasticsearch = Depends(get_elastic),
 ) -> FilmListSearchService:
+    """Провайдер FilmListSearchService."""
     return FilmListSearchService(redis, elastic)

@@ -13,8 +13,10 @@ from services.abstracts import AbstractItemService
 
 
 class PersonService(AbstractItemService):
+    """Класс для работы с персоной."""
 
     async def get_by_id(self, person_id: str) -> Optional[Person]:
+        """Основной метод получения персоны по id."""
 
         log.info("\nGetting person '%s'.\n", person_id)
 
@@ -29,6 +31,7 @@ class PersonService(AbstractItemService):
         return person
 
     async def _get_item_from_elastic(self, person_id: str) -> Optional[Person]:
+        """Метод получения персоны по id из elasticsearch."""
         try:
             log.info("\nGetting person from elasticsearch\n")
             doc = await self.elastic.get(index="persons", id=person_id)
@@ -47,4 +50,5 @@ def get_person_service(
     redis: Redis = Depends(get_redis),
     elastic: AsyncElasticsearch = Depends(get_elastic),
 ) -> PersonService:
+    """Провайдер PersonService."""
     return PersonService(redis, elastic)

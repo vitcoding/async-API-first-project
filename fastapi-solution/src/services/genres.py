@@ -13,12 +13,14 @@ from services.abstracts import AbstractListService
 
 
 class GenreListService(AbstractListService):
+    """Класс для работы со списком жанров."""
 
     async def get_list(
         self,
         page_size: int,
         page_number: int,
     ) -> Optional[list[Genre]]:
+        """Основной метод получения списка жанров."""
 
         log.info("\nGetting genres.\n")
 
@@ -38,6 +40,7 @@ class GenreListService(AbstractListService):
         page_size: int,
         page_number: int,
     ) -> Optional[list[Genre]]:
+        """Метод получения списка жанров из elasticsearch."""
 
         index_ = "genres"
         docs_total = await self._docs_total(index_)
