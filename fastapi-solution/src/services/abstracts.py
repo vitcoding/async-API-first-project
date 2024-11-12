@@ -12,8 +12,8 @@ from models.film import Film, FilmRedis
 from models.genre import Genre, GenreRedis
 from models.person import Person, PersonRedis
 
-# CACHE_EXPIRE_IN_SECONDS = 60 * 5
-CACHE_EXPIRE_IN_SECONDS = 1
+CACHE_EXPIRE_IN_SECONDS = 60 * 5
+# CACHE_EXPIRE_IN_SECONDS = 1
 
 
 class AbstractService(ABC):
