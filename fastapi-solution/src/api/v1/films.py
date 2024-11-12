@@ -6,6 +6,10 @@ from pydantic import BaseModel
 
 from services.film import FilmService, get_film_service
 from services.films import FilmListService, get_film_list_service
+from services.films_search import (
+    FilmListSearchService,
+    get_film_list_search_service,
+)
 
 # Объект router, в котором регистрируем обработчики
 router = APIRouter()
@@ -50,6 +54,23 @@ async def film_list(
     film_service: FilmListService = Depends(get_film_list_service),
 ) -> list:
     films = await film_service.get_list(sort, page_size, page_number, genre)
+    return [FilmList(**dict(film)) for film in films]
+
+
+@router.get("/search")
+async def search_film_list(
+    query: str | None = Query(None),
+    sort: str | None = Query("-imdb_rating"),
+    page_size: int = Query(50, ge=1),
+    page_number: int = Query(1),
+    genre: str = Query(None),
+    film_service: FilmListSearchService = Depends(
+        get_film_list_search_service
+    ),
+) -> list:
+    films = await film_service.get_list(
+        query, sort, page_size, page_number, genre
+    )
     return [FilmList(**dict(film)) for film in films]
 
 
