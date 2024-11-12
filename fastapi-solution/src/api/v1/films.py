@@ -60,7 +60,6 @@ async def film_list(
 @router.get("/search")
 async def search_film_list(
     query: str | None = Query(None),
-    # sort: str | None = Query("-imdb_rating"),
     page_size: int = Query(50, ge=1),
     page_number: int = Query(1),
     film_service: FilmListSearchService = Depends(
@@ -68,9 +67,6 @@ async def search_film_list(
     ),
 ) -> list:
     films = await film_service.get_list(query, page_size, page_number)
-    # films = await film_service.get_list(
-    #     query, sort, page_size, page_number, genre
-    # )
     return [FilmList(**dict(film)) for film in films]
 
 

@@ -3,14 +3,16 @@ from abc import ABC, abstractmethod
 from http import HTTPStatus
 from typing import Any, Optional
 
-from elasticsearch import AsyncElasticsearch
+from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import HTTPException
 from redis.asyncio import Redis
 
 from core.config import log
-from models.film import Film, FilmRedis
-from models.genre import Genre, GenreRedis
-from models.person import Person, PersonRedis
+from models.film import Film
+from models.genre import Genre
+from models.person import Person
+from services.es_queries import common, persons_in_films
+from services.tools.person_films_dict import films_dict
 
 # CACHE_EXPIRE_IN_SECONDS = 60 * 5
 CACHE_EXPIRE_IN_SECONDS = 1
@@ -70,6 +72,30 @@ class AbstractService(ABC):
         else:
             await self.redis.set(key, data.json(), CACHE_EXPIRE_IN_SECONDS)
             log.info("\nThe data is placed in redis.\n")
+
+    async def _get_person_films(self, person_id: str) -> list[dict[str, Any]]:
+        index_ = "movies"
+
+        query_body = common.get_query()
+        query_body["query"] = persons_in_films.get_query(person_id)
+
+        try:
+            log.info("\nGeting films from elasticsearch\n")
+            docs = await self.elastic.search(
+                index=index_,
+                body=query_body,
+            )
+            films = [
+                dict(Film(**doc["_source"])) for doc in docs["hits"]["hits"]
+            ]
+        except NotFoundError:
+            return None
+
+        films_person = films_dict(person_id, films)
+
+        log.debug("\nfilms_person: \n%s\n", films_person)
+
+        return films_person
 
 
 class AbstractListService(AbstractService):

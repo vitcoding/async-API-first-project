@@ -47,26 +47,6 @@ class PersonFilmListService(AbstractItemService):
 
         return films_person
 
-    async def _get_person_films(self, person_id):
-        index_ = "movies"
-
-        query_body = common.get_query(100, 1, "-imdb_rating")
-        query_body["query"] = persons_in_films.get_query(person_id)
-
-        try:
-            log.info("\nGeting films from elasticsearch\n")
-            docs = await self.elastic.search(
-                index=index_,
-                body=query_body,
-            )
-            films = [Film(**doc["_source"]) for doc in docs["hits"]["hits"]]
-        except NotFoundError:
-            return None
-
-        log.debug("\nfilms_person: \n%s\n", films)
-
-        return films
-
 
 @lru_cache()
 def get_person_film_list_service(

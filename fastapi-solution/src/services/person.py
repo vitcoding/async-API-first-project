@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Optional
+from typing import Any, Optional
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
@@ -43,30 +43,6 @@ class PersonService(AbstractItemService):
         person = Person(**doc["_source"], films=films_person)
 
         return person
-
-    async def _get_person_films(self, person_id):
-        index_ = "movies"
-
-        query_body = common.get_query()
-        query_body["query"] = persons_in_films.get_query(person_id)
-
-        try:
-            log.info("\nGeting films from elasticsearch\n")
-            docs = await self.elastic.search(
-                index=index_,
-                body=query_body,
-            )
-            films = [
-                dict(Film(**doc["_source"])) for doc in docs["hits"]["hits"]
-            ]
-        except NotFoundError:
-            return None
-
-        films_person = films_dict(person_id, films)
-
-        log.debug("\nfilms_person: \n%s\n", films_person)
-
-        return films_person
 
 
 @lru_cache()

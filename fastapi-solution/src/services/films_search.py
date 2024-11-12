@@ -17,7 +17,6 @@ class FilmListSearchService(AbstractListService):
     async def get_list(
         self,
         query: str | None,
-        # sort_field: str | None,
         page_size: int,
         page_number: int,
     ) -> Optional[list[Film]]:
@@ -25,15 +24,11 @@ class FilmListSearchService(AbstractListService):
         log.info("\nGetting films.\n")
 
         key = f"{query}, {page_size}, {page_number}"
-        # key = f"{query}, {sort_field}, {page_size}, {page_number}"
         films = await self._get_from_cache(key, "film", is_list=True)
         if not films:
             films = await self._get_list_from_elastic(
                 query, page_size, page_number
             )
-            # films = await self._get_list_from_elastic(
-            #     query, sort_field, page_size, page_number
-            # )
             if not films:
                 return None
 
@@ -44,7 +39,6 @@ class FilmListSearchService(AbstractListService):
     async def _get_list_from_elastic(
         self,
         query: str | None,
-        # sort_field: str | None,
         page_size: int,
         page_number: int,
     ) -> Optional[list[Film]]:
@@ -56,18 +50,9 @@ class FilmListSearchService(AbstractListService):
             docs_total, page_number, pages_total, page_size
         )
 
-        # order = ("asc", "desc")[sort_field.startswith("-")]
-        # if order == "desc":
-        #     sort_field = sort_field[1:]
-
         query_body = {
             "size": (page_size),
             "from": (page_number - 1) * page_size,
-            # "sort": [
-            #     {
-            #         sort_field: {"order": order, "missing": "_last"},
-            #     }
-            # ],
         }
 
         if query is not None:
