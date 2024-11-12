@@ -26,12 +26,3 @@ class FilmRedis(Film):
     def __post_init__(self):
         if isinstance(self.id, UUID):
             self.id = str(self.id)
-
-
-# class FilmPerson(BaseModel):
-#     id: UUID | str
-#     roles: list[str] | None
-
-#     def __post_init__(self):
-#         if isinstance(self.id, str):
-#             self.id = str(self.id)

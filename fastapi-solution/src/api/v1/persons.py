@@ -18,7 +18,6 @@ from services.persons_search import (
 router = APIRouter()
 
 
-# Модель ответа API
 class Person(BaseModel):
     id: UUID
     full_name: str

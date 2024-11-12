@@ -8,10 +8,8 @@ from redis.asyncio import Redis
 from core.config import log
 from db.elastic import get_elastic
 from db.redis import get_redis
-from models.film import Film  # , FilmPerson
 from models.person import Person
 from services.abstracts import AbstractItemService
-from services.es_queries import common, persons_in_films
 
 
 class PersonFilmListService(AbstractItemService):

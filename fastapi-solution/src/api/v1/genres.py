@@ -10,7 +10,6 @@ from services.genres import GenreListService, get_genre_list_service
 router = APIRouter()
 
 
-# Модель ответа API
 class Genre(BaseModel):
     id: UUID
     name: str

@@ -11,7 +11,6 @@ from services.films_search import (
     get_film_list_search_service,
 )
 
-# Объект router, в котором регистрируем обработчики
 router = APIRouter()
 
 
