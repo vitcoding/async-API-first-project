@@ -10,6 +10,7 @@ from db.elastic import get_elastic
 from db.redis import get_redis
 from models.film import Film
 from services.abstracts import AbstractListService
+from services.es_queries import common
 
 
 class FilmListService(AbstractListService):
@@ -52,19 +53,7 @@ class FilmListService(AbstractListService):
             docs_total, page_number, pages_total, page_size
         )
 
-        order = ("asc", "desc")[sort_field.startswith("-")]
-        if order == "desc":
-            sort_field = sort_field[1:]
-
-        query_body = {
-            "size": (page_size),
-            "from": (page_number - 1) * page_size,
-            "sort": [
-                {
-                    sort_field: {"order": order, "missing": "_last"},
-                }
-            ],
-        }
+        query_body = common.get_query(page_size, page_number, sort_field)
 
         # Надо будет скорректировать после добавления индексов по жанрам
         if genre_uuid is not None:

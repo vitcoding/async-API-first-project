@@ -11,6 +11,7 @@ from db.redis import get_redis
 from models.film import Film  # , FilmPerson
 from models.person import Person
 from services.abstracts import AbstractItemService
+from services.es_queries import common, persons_in_films
 
 
 class PersonFilmListService(AbstractItemService):
@@ -24,11 +25,6 @@ class PersonFilmListService(AbstractItemService):
         )
         if not person_films:
             person_films = await self._get_item_from_elastic(person_id)
-
-            # # print(person)
-            # print(type(person))
-            # for p in person:
-            #     print(p)
 
             if not person_films:
                 return None
@@ -48,49 +44,14 @@ class PersonFilmListService(AbstractItemService):
 
         except NotFoundError:
             return None
-        # person_films = [Film(**film) for film in films_person]
 
         return films_person
-        # return person_films
 
     async def _get_person_films(self, person_id):
         index_ = "movies"
-        sort_field = "imdb_rating"
-        order = "desc"
 
-        query_body = {
-            # "size": (page_size),
-            # "from": (page_number - 1) * page_size,
-            "sort": [
-                {
-                    sort_field: {"order": order, "missing": "_last"},
-                }
-            ],
-            "query": {
-                "bool": {
-                    "should": [
-                        {
-                            "nested": {
-                                "path": "actors",
-                                "query": {"term": {"actors.id": person_id}},
-                            }
-                        },
-                        {
-                            "nested": {
-                                "path": "writers",
-                                "query": {"term": {"writers.id": person_id}},
-                            }
-                        },
-                        {
-                            "nested": {
-                                "path": "directors",
-                                "query": {"term": {"directors.id": person_id}},
-                            }
-                        },
-                    ]
-                }
-            },
-        }
+        query_body = common.get_query(100, 1, "-imdb_rating")
+        query_body["query"] = persons_in_films.get_query(person_id)
 
         try:
             log.info("\nGeting films from elasticsearch\n")

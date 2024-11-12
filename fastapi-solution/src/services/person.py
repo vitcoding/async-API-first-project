@@ -11,7 +11,7 @@ from db.redis import get_redis
 from models.film import Film  # , FilmPerson
 from models.person import Person
 from services.abstracts import AbstractItemService
-from services.queries import persons_in_films
+from services.es_queries import common, persons_in_films
 from services.tools.person_films_dict import films_dict
 
 
@@ -49,7 +49,7 @@ class PersonService(AbstractItemService):
         # sort_field = "imdb_rating"
         # order = "desc"
 
-        query_body = {}
+        query_body = common.get_query()
         query_body["query"] = persons_in_films.get_query(person_id)
 
         try:

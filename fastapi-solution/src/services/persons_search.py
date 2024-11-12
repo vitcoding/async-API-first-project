@@ -11,6 +11,8 @@ from db.redis import get_redis
 from models.film import Film
 from models.person import Person, PersonBase
 from services.abstracts import AbstractListService
+from services.es_queries import common, persons_in_films
+from services.tools.person_films_dict import films_dict
 
 
 class PersonListSearchService(AbstractListService):
@@ -58,19 +60,7 @@ class PersonListSearchService(AbstractListService):
             docs_total, page_number, pages_total, page_size
         )
 
-        # order = ("asc", "desc")[sort_field.startswith("-")]
-        # if order == "desc":
-        #     sort_field = sort_field[1:]
-
-        query_body = {
-            "size": (page_size),
-            "from": (page_number - 1) * page_size,
-            # "sort": [
-            #     {
-            #         sort_field: {"order": order, "missing": "_last"},
-            #     }
-            # ],
-        }
+        query_body = common.get_query(page_size, page_number, None)
 
         if query is not None:
             query_body["query"] = {
@@ -90,18 +80,51 @@ class PersonListSearchService(AbstractListService):
                 index=index_,
                 body=query_body,
             )
-            persons = [
+            persons_query = [
                 PersonBase(**doc["_source"]) for doc in docs["hits"]["hits"]
             ]
 
             # print(persons)
-            for pers in persons:
-                print(dict(pers)["id"])
+
+            persons = []
+            for person in persons_query:
+                # print(dict(person)["id"])
+                person_temp = Person(
+                    **dict(person),
+                    films=await self._get_person_films(dict(person)["id"]),
+                )
+                persons.append(person_temp)
 
         except NotFoundError:
             return None
         log.debug("\ndocs: \n%s\n", docs["hits"]["hits"])
         return persons
+
+    async def _get_person_films(self, person_id):
+        index_ = "movies"
+        # sort_field = "imdb_rating"
+        # order = "desc"
+
+        query_body = common.get_query()
+        query_body["query"] = persons_in_films.get_query(person_id)
+
+        try:
+            log.info("\nGeting films from elasticsearch\n")
+            docs = await self.elastic.search(
+                index=index_,
+                body=query_body,
+            )
+            films = [
+                dict(Film(**doc["_source"])) for doc in docs["hits"]["hits"]
+            ]
+        except NotFoundError:
+            return None
+
+        films_person = films_dict(person_id, films)
+
+        log.debug("\nfilms_person: \n%s\n", films_person)
+
+        return films_person
 
 
 @lru_cache()
