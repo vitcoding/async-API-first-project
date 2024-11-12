@@ -20,7 +20,6 @@ class PersonListSearchService(AbstractListService):
     async def get_list(
         self,
         query: str | None,
-        # sort_field: str | None,
         page_size: int,
         page_number: int,
     ) -> Optional[list[Film]]:
@@ -28,15 +27,11 @@ class PersonListSearchService(AbstractListService):
         log.info("\nGetting persons.\n")
 
         key = f"{query}, {page_size}, {page_number}"
-        # key = f"{query}, {sort_field}, {page_size}, {page_number}"
         persons = await self._get_from_cache(key, "person", is_list=True)
         if not persons:
             persons = await self._get_list_from_elastic(
                 query, page_size, page_number
             )
-            # persons = await self._get_list_from_elastic(
-            #     query, sort_field, page_size, page_number
-            # )
 
             if not persons:
                 return None
@@ -48,7 +43,6 @@ class PersonListSearchService(AbstractListService):
     async def _get_list_from_elastic(
         self,
         query: str | None,
-        # sort_field: str | None,
         page_size: int,
         page_number: int,
     ) -> Optional[list[Person]]:
@@ -84,11 +78,8 @@ class PersonListSearchService(AbstractListService):
                 PersonBase(**doc["_source"]) for doc in docs["hits"]["hits"]
             ]
 
-            # print(persons)
-
             persons = []
             for person in persons_query:
-                # print(dict(person)["id"])
                 person_temp = Person(
                     **dict(person),
                     films=await self._get_person_films(dict(person)["id"]),
@@ -102,8 +93,6 @@ class PersonListSearchService(AbstractListService):
 
     async def _get_person_films(self, person_id):
         index_ = "movies"
-        # sort_field = "imdb_rating"
-        # order = "desc"
 
         query_body = common.get_query()
         query_body["query"] = persons_in_films.get_query(person_id)

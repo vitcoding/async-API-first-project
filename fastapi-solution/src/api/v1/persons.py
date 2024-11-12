@@ -60,8 +60,6 @@ async def person_details(
 @router.get("/{person_id}/film")
 async def person_film_list(
     person_id: str,
-    # page_size: int = Query(50, ge=1),
-    # page_number: int = Query(1),
     person_films_service: PersonFilmListService = Depends(
         get_person_film_list_service
     ),
