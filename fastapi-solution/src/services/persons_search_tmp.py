@@ -10,12 +10,10 @@ from db.elastic import get_elastic
 from db.redis import get_redis
 from models.film import Film  # , FilmPerson
 from models.person import Person
-from services.abstracts import AbstractItemService
-from services.queries import persons_in_films
-from services.tools.person_films_dict import films_dict
+from services.abstracts import AbstractListService
 
 
-class PersonService(AbstractItemService):
+class PersonService(AbstractListService):
 
     async def get_by_id(self, person_id: str) -> Optional[Person]:
 
@@ -49,8 +47,32 @@ class PersonService(AbstractItemService):
         # sort_field = "imdb_rating"
         # order = "desc"
 
-        query_body = {}
-        query_body["query"] = persons_in_films.get_query(person_id)
+        query_body = {
+            "query": {
+                "bool": {
+                    "should": [
+                        {
+                            "nested": {
+                                "path": "actors",
+                                "query": {"term": {"actors.id": person_id}},
+                            }
+                        },
+                        {
+                            "nested": {
+                                "path": "writers",
+                                "query": {"term": {"writers.id": person_id}},
+                            }
+                        },
+                        {
+                            "nested": {
+                                "path": "directors",
+                                "query": {"term": {"directors.id": person_id}},
+                            }
+                        },
+                    ]
+                }
+            }
+        }
 
         try:
             log.info("\nGeting films from elasticsearch\n")
@@ -58,13 +80,24 @@ class PersonService(AbstractItemService):
                 index=index_,
                 body=query_body,
             )
-            films = [
-                dict(Film(**doc["_source"])) for doc in docs["hits"]["hits"]
-            ]
+            films = [Film(**doc["_source"]) for doc in docs["hits"]["hits"]]
         except NotFoundError:
             return None
 
-        films_person = films_dict(person_id, films)
+        films_person = []
+        for film in films:
+            film_temp, roles_temp = {}, []
+            for key, value in dict(film).items():
+                match key:
+                    case "id":
+                        film_temp[key] = value
+                    case "directors" | "actors" | "writers":
+                        for item in value:
+                            if item["id"] == person_id:
+                                roles_temp.append(key[:-1])
+            film_temp["roles"] = sorted(roles_temp)
+
+            films_person.append(film_temp)
 
         log.debug("\nfilms_person: \n%s\n", films_person)
 
