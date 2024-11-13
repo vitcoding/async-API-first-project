@@ -20,13 +20,14 @@ class PersonService(AbstractItemService):
 
         log.info("\nGetting person '%s'.\n", person_id)
 
-        person = await self._get_from_cache(str(person_id), "person")
+        key = f"Person: id: {str(person_id)}"
+        person = await self._get_from_cache(key, "person")
         if not person:
             person = await self._get_item_from_elastic(person_id)
 
             if not person:
                 return None
-            await self._put_to_cache(str(person_id), person, "person")
+            await self._put_to_cache(key, person, "person")
 
         return person
 

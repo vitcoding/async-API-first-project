@@ -26,7 +26,10 @@ class FilmListService(AbstractListService):
 
         log.info("\nGetting films.\n")
 
-        key = f"{sort_field}, {page_size}, {page_number}, {genre_uuid}"
+        key = (
+            f"FilmList: sort: {sort_field}, size: {page_size}, "
+            f"page: {page_number}, genre_uuid: {genre_uuid}"
+        )
         films = await self._get_from_cache(key, "film", is_list=True)
         if not films:
             films = await self._get_list_from_elastic(

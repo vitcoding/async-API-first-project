@@ -23,7 +23,7 @@ class GenreListService(AbstractListService):
 
         log.info("\nGetting genres.\n")
 
-        key = f"{page_size}, {page_number}"
+        key = f"GenreList: size: {page_size}, page: {page_number}"
         genres = await self._get_from_cache(key, "genre", is_list=True)
         if not genres:
             genres = await self._get_list_from_elastic(page_size, page_number)

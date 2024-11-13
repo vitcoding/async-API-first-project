@@ -19,18 +19,15 @@ class PersonFilmListService(AbstractItemService):
 
         log.info("\nGetting person '%s'.\n", person_id)
 
-        person_films = await self._get_from_cache(
-            str(person_id) + "_films", "film", is_list=True
-        )
+        key = f"PersonFilms: id: {str(person_id)}"
+        person_films = await self._get_from_cache(key, "film", is_list=True)
         if not person_films:
             person_films = await self._get_item_from_elastic(person_id)
 
             if not person_films:
                 return None
 
-            await self._put_to_cache(
-                str(person_id) + "_films", person_films, "film"
-            )
+            await self._put_to_cache(key, person_films, "film")
 
         return person_films
 

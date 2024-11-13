@@ -24,7 +24,7 @@ class FilmListSearchService(AbstractListService):
 
         log.info("\nGetting films.\n")
 
-        key = f"{query}, {page_size}, {page_number}"
+        key = f"FilmSearch: {query}, size: {page_size}, page: {page_number}"
         films = await self._get_from_cache(key, "film", is_list=True)
         if not films:
             films = await self._get_list_from_elastic(

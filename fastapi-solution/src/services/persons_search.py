@@ -27,7 +27,7 @@ class PersonListSearchService(AbstractListService):
 
         log.info("\nGetting persons.\n")
 
-        key = f"{query}, {page_size}, {page_number}"
+        key = f"PersonSearch: {query}, size: {page_size}, page: {page_number}"
         persons = await self._get_from_cache(key, "person", is_list=True)
         if not persons:
             persons = await self._get_list_from_elastic(

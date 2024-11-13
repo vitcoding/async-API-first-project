@@ -19,12 +19,13 @@ class FilmService(AbstractItemService):
 
         log.info("\nGetting film '%s'.\n", film_id)
 
-        film = await self._get_from_cache(str(film_id), "film")
+        key = f"Film: id: {str(film_id)}"
+        film = await self._get_from_cache(key, "film")
         if not film:
             film = await self._get_item_from_elastic(film_id)
             if not film:
                 return None
-            await self._put_to_cache(str(film_id), film, "film")
+            await self._put_to_cache(key, film, "film")
 
         return film
 

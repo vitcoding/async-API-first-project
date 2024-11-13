@@ -19,12 +19,13 @@ class GenreService(AbstractItemService):
 
         log.info("\nGetting genre '%s'.\n", genre_id)
 
-        genre = await self._get_from_cache(str(genre_id), "genre")
+        key = f"Genre: id: {str(genre_id)}"
+        genre = await self._get_from_cache(key, "genre")
         if not genre:
             genre = await self._get_item_from_elastic(genre_id)
             if not genre:
                 return None
-            await self._put_to_cache(str(genre_id), genre, "genre")
+            await self._put_to_cache(key, genre, "genre")
 
         return genre
 
