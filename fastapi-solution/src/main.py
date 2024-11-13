@@ -11,7 +11,7 @@ from core import config
 from core.logger import LOGGING
 from db import elastic, redis
 
-# Конфигурация пиложения
+# Конфигурация приложения
 app = FastAPI(
     title=config.PROJECT_NAME,
     docs_url="/api/openapi",
