@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, List
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -34,7 +34,7 @@ class PersonFilmList(BaseModel):
 
 @router.get(
     "/search",
-    response_model=List[Person],
+    response_model=list[Person],
     summary="Поиск персон",
     description="Полнотекстовый поиск по персонам",
     response_description="Имя и кинопроизведения персоны",
@@ -47,7 +47,7 @@ async def person_list(
     person_service: PersonListSearchService = Depends(
         get_person_list_search_service
     ),
-) -> list:
+) -> list[Person]:
     persons = await person_service.get_list(query, page_size, page_number)
     if not persons:
         raise HTTPException(
@@ -77,7 +77,7 @@ async def person_details(
 
 @router.get(
     "/{person_id}/film",
-    response_model=List[PersonFilmList],
+    response_model=list[PersonFilmList],
     summary="Список кинопроизведений персоны",
     description="Список кинопроизведений персоны",
     response_description="Название и рейтинг киопроизведения",
@@ -88,7 +88,7 @@ async def person_film_list(
     person_films_service: PersonFilmListService = Depends(
         get_person_film_list_service
     ),
-) -> list:
+) -> list[PersonFilmList]:
     person_films = await person_films_service.get_by_id(person_id)
     if not person_films:
         raise HTTPException(

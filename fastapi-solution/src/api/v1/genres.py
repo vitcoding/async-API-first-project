@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -20,7 +19,7 @@ class Genre(BaseModel):
 
 @router.get(
     "/",
-    response_model=List[Genre],
+    response_model=list[Genre],
     summary="Список жанров",
     description="Постраничный список жанров",
     response_description="Название и описание жанров",
@@ -30,7 +29,7 @@ async def genre_list(
     page_size: int = Query(50, ge=1),
     page_number: int = Query(1),
     genre_service: GenreListService = Depends(get_genre_list_service),
-) -> list:
+) -> list[Genre]:
     genres = await genre_service.get_list(page_size, page_number)
     if not genres:
         raise HTTPException(
