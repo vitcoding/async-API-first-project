@@ -1,5 +1,0 @@
-psycopg==3.1.18
-python-dotenv==1.0.1
-elasticsearch==8.15.1
-python-dateutil==2.9.0.post0
-pydantic-settings==2.6.0

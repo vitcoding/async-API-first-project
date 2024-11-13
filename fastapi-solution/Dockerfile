@@ -12,6 +12,10 @@ RUN apt-get update \
     && pip install --upgrade --no-cache-dir pip \
     && pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY entrypoint.sh /
+RUN chmod +x /entrypoint.sh
 
-ENTRYPOINT ["sh", "/opt/app/entrypoint.sh"]
+
+COPY ./src .
+
+ENTRYPOINT ["/entrypoint.sh"]

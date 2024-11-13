@@ -59,14 +59,14 @@ class State:
     def __init__(self, storage: BaseStorage) -> None:
         self.storage = storage
 
-    def set_state(self, key: str, value: Any) -> None:
+    def write_state(self, key: str, value: Any) -> None:
         """Метод установки состояния для определённого ключа."""
 
         data = self.storage.retrieve_state()
         data[key] = value
         self.storage.save_state(data)
 
-    def get_state(self, key: str) -> Any:
+    def read_state(self, key: str) -> Any:
         """Метод получения состояния по определённому ключу."""
 
         data = self.storage.retrieve_state()

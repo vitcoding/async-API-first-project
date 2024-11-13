@@ -4,6 +4,7 @@ __pycache__/
 *.env
 
 *temp/
-*example
+*_example
 data_state.json
+main.log
 
