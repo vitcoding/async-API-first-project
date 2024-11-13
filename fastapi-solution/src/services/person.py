@@ -1,5 +1,4 @@
 from functools import lru_cache
-from typing import Optional
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
@@ -16,7 +15,7 @@ from services.tools.person_films_dict import films_dict
 class PersonService(AbstractItemService):
     """Класс для работы с персоной."""
 
-    async def get_by_id(self, person_id: str) -> Optional[Person]:
+    async def get_by_id(self, person_id: str) -> Person | None:
         """Основной метод получения персоны по id."""
 
         log.info("\nGetting person '%s'.\n", person_id)
@@ -31,7 +30,7 @@ class PersonService(AbstractItemService):
 
         return person
 
-    async def _get_item_from_elastic(self, person_id: str) -> Optional[Person]:
+    async def _get_item_from_elastic(self, person_id: str) -> Person | None:
         """Метод получения персоны по id из elasticsearch."""
         try:
             log.info("\nGetting person from elasticsearch\n")

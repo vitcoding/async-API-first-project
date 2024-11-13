@@ -1,5 +1,4 @@
 from functools import lru_cache
-from typing import Optional
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
@@ -22,7 +21,7 @@ class FilmListService(AbstractListService):
         page_size: int,
         page_number: int,
         genre_uuid: str | None,
-    ) -> Optional[list[Film]]:
+    ) -> list[Film] | None:
         """Основной метод получения списка кинопроизведений."""
 
         log.info("\nGetting films.\n")
@@ -46,7 +45,7 @@ class FilmListService(AbstractListService):
         page_size: int,
         page_number: int,
         genre_uuid: str | None,
-    ) -> Optional[list[Film]]:
+    ) -> list[Film] | None:
         """Метод получения списка кинопроизведений из elasticsearch."""
 
         index_ = "movies"

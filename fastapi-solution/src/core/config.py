@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from core.logger import LOGGING
 
-load_dotenv()
+# load_dotenv()
 
 # Настройки логирования
 logging_config.dictConfig(LOGGING)

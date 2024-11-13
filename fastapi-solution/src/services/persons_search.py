@@ -1,5 +1,4 @@
 from functools import lru_cache
-from typing import Optional
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
@@ -23,7 +22,7 @@ class PersonListSearchService(AbstractListService):
         query: str | None,
         page_size: int,
         page_number: int,
-    ) -> Optional[list[Film]]:
+    ) -> list[Film] | None:
         """Основной метод получения списка персон."""
 
         log.info("\nGetting persons.\n")
@@ -47,7 +46,7 @@ class PersonListSearchService(AbstractListService):
         query: str | None,
         page_size: int,
         page_number: int,
-    ) -> Optional[list[Person]]:
+    ) -> list[Person] | None:
         """Метод получения списка персон из elasticsearch."""
 
         index_ = "persons"

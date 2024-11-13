@@ -1,5 +1,4 @@
 from functools import lru_cache
-from typing import Optional
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
@@ -15,7 +14,7 @@ from services.abstracts import AbstractItemService
 class GenreService(AbstractItemService):
     """Класс для работы с жанром."""
 
-    async def get_by_id(self, genre_id: str) -> Optional[Genre]:
+    async def get_by_id(self, genre_id: str) -> Genre | None:
         """Основной метод получения жанра по id."""
 
         log.info("\nGetting genre '%s'.\n", genre_id)
@@ -29,7 +28,7 @@ class GenreService(AbstractItemService):
 
         return genre
 
-    async def _get_item_from_elastic(self, genre_id: str) -> Optional[Genre]:
+    async def _get_item_from_elastic(self, genre_id: str) -> Genre | None:
         """Метод получения жанра по id из elasticsearch."""
         try:
             log.info("\nGetting genre from elasticsearch\n")

@@ -1,5 +1,4 @@
 from functools import lru_cache
-from typing import Optional
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
@@ -19,7 +18,7 @@ class GenreListService(AbstractListService):
         self,
         page_size: int,
         page_number: int,
-    ) -> Optional[list[Genre]]:
+    ) -> list[Genre] | None:
         """Основной метод получения списка жанров."""
 
         log.info("\nGetting genres.\n")
@@ -39,7 +38,7 @@ class GenreListService(AbstractListService):
         self,
         page_size: int,
         page_number: int,
-    ) -> Optional[list[Genre]]:
+    ) -> list[Genre] | None:
         """Метод получения списка жанров из elasticsearch."""
 
         index_ = "genres"

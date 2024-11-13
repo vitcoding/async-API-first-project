@@ -1,7 +1,7 @@
 import json
 from abc import ABC, abstractmethod
 from http import HTTPStatus
-from typing import Any, Optional
+from typing import Any
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import HTTPException
@@ -33,7 +33,7 @@ class AbstractService(ABC):
         key: str,
         model: str,
         is_list: bool = False,
-    ) -> Optional[Any]:
+    ) -> Any:
         """Метод плучения данных из кеша."""
 
         object_ = self._models[model]
@@ -145,7 +145,7 @@ class AbstractListService(AbstractService):
         self,
         *args,
         **kwargs,
-    ) -> Optional[Any]:
+    ) -> Any:
         """Абстрактный метод получения списка элементов."""
         pass
 
@@ -154,7 +154,7 @@ class AbstractListService(AbstractService):
         sself,
         *args,
         **kwargs,
-    ) -> Optional[Any]:
+    ) -> Any:
         """Абстрактный метод получения списка элементов из elasticsearch."""
         pass
 
@@ -166,7 +166,7 @@ class AbstractItemService(AbstractService):
         self,
         *args,
         **kwargs,
-    ) -> Optional[Any]:
+    ) -> Any:
         """Абстрактный метод получения элемента по id."""
         pass
 
@@ -175,6 +175,6 @@ class AbstractItemService(AbstractService):
         sself,
         *args,
         **kwargs,
-    ) -> Optional[Any]:
+    ) -> Any:
         """Абстрактный метод получения элемента по id из elasticsearch."""
         pass
