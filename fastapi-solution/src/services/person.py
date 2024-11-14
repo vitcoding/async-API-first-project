@@ -4,7 +4,7 @@ from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
 from redis.asyncio import Redis
 
-from core.config import log
+from core.logger import log
 from db.elastic import get_elastic
 from db.redis import get_redis
 from models.person import Person
@@ -44,6 +44,7 @@ class PersonService(AbstractItemService):
             films_person = films_dict(person_id, films)
         except NotFoundError:
             return None
+
         person = Person(**doc["_source"], films=films_person)
 
         return person

@@ -4,7 +4,7 @@ from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
 from redis.asyncio import Redis
 
-from core.config import log
+from core.logger import log
 from db.elastic import get_elastic
 from db.redis import get_redis
 from models.film import Film
@@ -36,7 +36,7 @@ class PersonFilmListService(AbstractItemService):
     ) -> list[Film] | None:
         """Метод получения списка кинопроизведений персоны из elasticsearch."""
         try:
-            log.info("\nGetting person from elasticsearch\n")
+            log.info("\nGetting person from elasticsearch.\n")
 
             person_films = await self._get_person_films(person_id)
 

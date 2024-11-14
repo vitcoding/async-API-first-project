@@ -7,7 +7,7 @@ from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import HTTPException
 from redis.asyncio import Redis
 
-from core.config import log
+from core.logger import log
 from models.film import Film
 from models.genre import Genre
 from models.person import Person
@@ -49,6 +49,7 @@ class AbstractService(ABC):
             return collection
 
         else:
+
             data = await self.redis.get(key)
             if not data:
                 return None
@@ -84,7 +85,7 @@ class AbstractService(ABC):
         query_body["query"] = persons_in_films.get_query(person_id)
 
         try:
-            log.info("\nGeting films from elasticsearch\n")
+            log.info("\nGeting films from elasticsearch.\n")
             docs = await self.elastic.search(
                 index=index_,
                 body=query_body,

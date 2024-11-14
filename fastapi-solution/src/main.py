@@ -1,26 +1,23 @@
-import logging
 from contextlib import asynccontextmanager
 
-import uvicorn
 from elasticsearch import AsyncElasticsearch
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 from redis.asyncio import Redis
 
 from api import router
-from core import config
-from core.logger import LOGGING
+from core.config import settings
 from db import elastic, redis
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Подключение к базам при старте сервера
-    redis.redis = Redis(host=config.REDIS_HOST, port=config.REDIS_PORT)
+    redis.redis = Redis(host=settings.redis_host, port=settings.redis_port)
     elastic.es = AsyncElasticsearch(
         hosts=[
-            f"{config.ELASTIC_SCHEMA}{config.ELASTIC_HOST}:"
-            f"{config.ELASTIC_PORT}"
+            f"{settings.elastic_schema}{settings.elastic_host}:"
+            f"{settings.elastic_port}"
         ]
     )
     yield
@@ -32,22 +29,11 @@ async def lifespan(app: FastAPI):
 # Конфигурация приложения
 app = FastAPI(
     lifespan=lifespan,
-    title=config.PROJECT_NAME,
+    title=settings.project_name,
     docs_url="/api/openapi",
     openapi_url="/api/openapi.json",
     default_response_class=ORJSONResponse,
 )
 
-
 # Подключение роутера к серверу
 app.include_router(router, prefix="/api")
-
-if __name__ == "__main__":
-    """Основная точка входа сервиса api."""
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        log_config=LOGGING,
-        log_level=logging.DEBUG,
-    )

@@ -4,7 +4,7 @@ from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
 from redis.asyncio import Redis
 
-from core.config import log
+from core.logger import log
 from db.elastic import get_elastic
 from db.redis import get_redis
 from models.film import Film
@@ -12,7 +12,7 @@ from services.abstracts import AbstractItemService
 
 
 class FilmService(AbstractItemService):
-    """Класс для работы с кинопроизведением"""
+    """Класс для работы с кинопроизведением."""
 
     async def get_by_id(self, film_id: str) -> Film | None:
         """Основной метод получения кинопроизведения по id."""
@@ -33,10 +33,11 @@ class FilmService(AbstractItemService):
         """Метод получения кинопроизведения по id из elasticsearch."""
 
         try:
-            log.info("\nGetting film from elasticsearch\n")
+            log.info("\nGetting film from elasticsearch.\n")
             doc = await self.elastic.get(index="movies", id=film_id)
         except NotFoundError:
             return None
+
         return Film(**doc["_source"])
 
 

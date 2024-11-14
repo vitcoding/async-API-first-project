@@ -28,7 +28,7 @@ class ElasticSettings(BaseSettings):
     :param host: Хост Elasticsearch (по умолчанию 'localhost').
     :param port: Порт Elasticsearch (по умолчанию 9200).
     """
-    host: str = Field(default='elasticsearch', env='ELASTICSEARCH_HOST')
+    host: str = Field(default='127.0.0.1', env='ELASTICSEARCH_HOST')
     port: int = Field(default=9200, env='ELASTICSEARCH_PORT')
 
 
@@ -60,7 +60,7 @@ class PostgresSettings(BaseSettings):
     dbname: str = Field(default='movies_db', env='POSTGRES_DB')
     user: str = Field(default='postgres', env='POSTGRES_USER')
     password: str = Field(default='secret', env='POSTGRES_PASSWORD')
-    host: str = Field(default='localhost', env='SQL_HOST')
+    host: str = Field(default='127.0.0.1', env='SQL_HOST')
     port: int = Field(default=5432, env='SQL_PORT')
     options: str = Field(default='-c search_path=content')
 

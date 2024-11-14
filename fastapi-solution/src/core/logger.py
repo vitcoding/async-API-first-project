@@ -1,3 +1,5 @@
+import logging
+
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 LOG_DEFAULT_HANDLERS = [
     "console",
@@ -16,7 +18,7 @@ LOGGING = {
         "access": {
             "()": "uvicorn.logging.AccessFormatter",
             "fmt": "%(levelprefix)s %(client_addr)s - "
-            + "'%(request_line)s' %(status_code)s",
+                   + "'%(request_line)s' %(status_code)s",
         },
     },
     "handlers": {
@@ -56,3 +58,14 @@ LOGGING = {
         "handlers": LOG_DEFAULT_HANDLERS,
     },
 }
+
+# Настройки дополнительного логера для дебага
+format_log = (
+    "#%(levelname)-8s [%(asctime)s] - %(filename)s:"
+    "%(lineno)d - %(name)s - %(message)s"
+)
+logging.basicConfig(
+    level=logging.INFO,
+    format=format_log,
+)
+log = logging.getLogger("DEBUG_LOG")

@@ -7,7 +7,7 @@ services:
       - ./.env
     volumes:
       - movies-database:/var/lib/postgresql/data
-      - ./database_dump.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./data/database_dump.sql:/docker-entrypoint-initdb.d/init.sql
     expose:
       - 5432
     restart: always
@@ -46,17 +46,24 @@ services:
       - redis.conf:/usr/local/etc/redis/redis.conf
     restart: always
 
+  nginx:
+    image: nginx:alpine3.18
+    ports:
+      - ${SERVICE_PORT}:80
+    volumes:
+      - ./data/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./data/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+
   api-service:
     build: ./fastapi-solution
     expose:
       - 8000
-    ports:
-      - ${SERVICE_PORT}:8000
     env_file:
       - .env
     depends_on:
       - elasticsearch
       - redis
+      - nginx
 
 volumes:
   movies-database:

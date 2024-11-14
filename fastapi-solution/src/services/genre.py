@@ -4,7 +4,7 @@ from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
 from redis.asyncio import Redis
 
-from core.config import log
+from core.logger import log
 from db.elastic import get_elastic
 from db.redis import get_redis
 from models.genre import Genre
@@ -31,11 +31,13 @@ class GenreService(AbstractItemService):
 
     async def _get_item_from_elastic(self, genre_id: str) -> Genre | None:
         """Метод получения жанра по id из elasticsearch."""
+
         try:
-            log.info("\nGetting genre from elasticsearch\n")
+            log.info("\nGetting genre from elasticsearch.\n")
             doc = await self.elastic.get(index="genres", id=genre_id)
         except NotFoundError:
             return None
+
         return Genre(**doc["_source"])
 
 

@@ -4,7 +4,7 @@ from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
 from redis.asyncio import Redis
 
-from core.config import log
+from core.logger import log
 from db.elastic import get_elastic
 from db.redis import get_redis
 from models.film import Film
@@ -70,7 +70,7 @@ class FilmListService(AbstractListService):
         log.info("\nquery_body: \n%s\n", query_body)
 
         try:
-            log.info("\nGeting films from elasticsearch\n")
+            log.info("\nGeting films from elasticsearch.\n")
             docs = await self.elastic.search(
                 index=index_,
                 body=query_body,
@@ -82,12 +82,13 @@ class FilmListService(AbstractListService):
         return films
 
     async def _get_genre_name_from_id(self, genre_id):
-        """Метод получения названия жанра по id"""
+        """Метод получения названия жанра по id."""
+
         index_ = "genres"
         query_body = common.get_query()
         query_body["query"] = {"match": {"id": genre_id}}
         try:
-            log.info("\nGeting films from elasticsearch\n")
+            log.info("\nGeting films from elasticsearch.\n")
             docs = await self.elastic.search(
                 index=index_,
                 body=query_body,

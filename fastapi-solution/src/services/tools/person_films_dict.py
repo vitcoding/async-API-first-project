@@ -4,6 +4,8 @@ from typing import Any
 def films_dict(
     person_id: str, films: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
+    """Функция сборки словаря фильмов персоны."""
+
     films_person = []
     for film in films:
         film_temp, roles_temp = {}, []
@@ -18,4 +20,5 @@ def films_dict(
         film_temp["roles"] = sorted(roles_temp)
 
         films_person.append(film_temp)
+
     return films_person

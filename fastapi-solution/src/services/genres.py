@@ -4,7 +4,7 @@ from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
 from redis.asyncio import Redis
 
-from core.config import log
+from core.logger import log
 from db.elastic import get_elastic
 from db.redis import get_redis
 from models.genre import Genre
@@ -56,7 +56,7 @@ class GenreListService(AbstractListService):
         log.info("\nquery_body: \n%s\n", query_body)
 
         try:
-            log.info("\nGeting genres from elasticsearch\n")
+            log.info("\nGeting genres from elasticsearch.\n")
             docs = await self.elastic.search(
                 index=index_,
                 body=query_body,
@@ -64,7 +64,9 @@ class GenreListService(AbstractListService):
             genres = [Genre(**doc["_source"]) for doc in docs["hits"]["hits"]]
         except NotFoundError:
             return None
+
         log.debug("\ndocs: \n%s\n", docs["hits"]["hits"])
+
         return genres
 
 

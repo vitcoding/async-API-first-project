@@ -4,7 +4,7 @@ from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
 from redis.asyncio import Redis
 
-from core.config import log
+from core.logger import log
 from db.elastic import get_elastic
 from db.redis import get_redis
 from models.film import Film
@@ -64,7 +64,8 @@ class FilmListSearchService(AbstractListService):
                     "fields": [
                         "title^3",
                         "description^2",
-                        "genres" "directors_names",
+                        "genres",
+                        "directors_names",
                         "actors_names",
                         "writers_names",
                     ],
@@ -84,7 +85,9 @@ class FilmListSearchService(AbstractListService):
 
         except NotFoundError:
             return None
+
         log.debug("\ndocs: \n%s\n", docs["hits"]["hits"])
+
         return films
 
 

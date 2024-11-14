@@ -15,7 +15,6 @@ RUN apt-get update \
 COPY entrypoint.sh /
 RUN chmod +x /entrypoint.sh
 
-
 COPY ./src .
 
 ENTRYPOINT ["/entrypoint.sh"]
