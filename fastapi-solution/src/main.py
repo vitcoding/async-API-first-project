@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 
 import uvicorn
 from elasticsearch import AsyncElasticsearch
@@ -11,18 +12,10 @@ from core import config
 from core.logger import LOGGING
 from db import elastic, redis
 
-# Конфигурация приложения
-app = FastAPI(
-    title=config.PROJECT_NAME,
-    docs_url="/api/openapi",
-    openapi_url="/api/openapi.json",
-    default_response_class=ORJSONResponse,
-)
 
-
-@app.on_event("startup")
-async def startup():
-    """Подключение к базам при старте сервера."""
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Подключение к базам при старте сервера
     redis.redis = Redis(host=config.REDIS_HOST, port=config.REDIS_PORT)
     elastic.es = AsyncElasticsearch(
         hosts=[
@@ -30,13 +23,20 @@ async def startup():
             f"{config.ELASTIC_PORT}"
         ]
     )
-
-
-@app.on_event("shutdown")
-async def shutdown():
-    """Отключение от баз при выключении сервера."""
+    yield
+    # Отключение от баз при выключении сервера
     await redis.redis.close()
     await elastic.es.close()
+
+
+# Конфигурация приложения
+app = FastAPI(
+    lifespan=lifespan,
+    title=config.PROJECT_NAME,
+    docs_url="/api/openapi",
+    openapi_url="/api/openapi.json",
+    default_response_class=ORJSONResponse,
+)
 
 
 # Подключение роутера к серверу
