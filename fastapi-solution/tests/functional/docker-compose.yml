@@ -52,27 +52,49 @@ services:
       - redis.conf:/usr/local/etc/redis/redis.conf
     restart: always
 
-  nginx:
-    image: nginx:alpine3.18
-    ports:
-      - 8000:80
-    volumes:
-      - ../../../data/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ../../../data/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+  # nginx:
+  #   image: nginx:alpine3.18
+  #   ports:
+  #     - 8000:80
+  #   volumes:
+  #     - ../../../data/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ../../../data/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+
+  # api-service:
+  #   build: ../../.
+  #   image: fastapi-image
+  #   env_file:
+  #     - ../../../.env
+  #   expose:
+  #     - 8000
+  #   depends_on:
+  #     - elasticsearch
+  #     - redis
+  #     - nginx
 
   api-service:
     build: ../../.
-    # image: fastapi-image
-    expose:
-      - 8000
+    image: fastapi-image
+    container_name: fastapi
     env_file:
       - ../../../.env
+    expose:
+      - 8000
+    ports:
+      - 8000:8000
+    # volumes:
+    #   - .:/app
     depends_on:
       - elasticsearch
       - redis
-      - nginx
   # tests:
   #   image: fastapi-image
+  #   container_name: tests
+  #   command: pytest
+  #   # volumes:
+  #   #   - .:/app
+  #   depends_on:
+  #     - api-service
 
 volumes:
   movies-database:
