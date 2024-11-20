@@ -15,7 +15,7 @@ from ..settings import test_settings
 #  Любой тест с асинхронными вызовами нужно оборачивать декоратором `pytest.mark.asyncio`, который следит за запуском и работой цикла событий.
 
 
-async def es_load_data(event):
+async def es_load_data(event: asyncio.Event):
     # 1. Генерируем данные для ES
     es_data = [
         {
@@ -69,13 +69,28 @@ async def es_load_data(event):
     if errors:
         raise Exception("Ошибка записи данных в Elasticsearch")
 
-    # Need time to create data in es
-    # Some check
-    await asyncio.sleep(1)
+    es_client = AsyncElasticsearch(
+        hosts=[test_settings.es_host], verify_certs=False
+    )
+    while True:
+        try:
+            document_count = await es_client.count(index="movies")
+            count = document_count["count"]
+            if count == 60:
+                ###
+                print(f"\n\ndocument_count: {document_count}\n")
+                break
+            await asyncio.sleep(0.1)
+        except Exception as err:
+            ###
+            print(err)
+            # raise err
+    await es_client.close()
+
     event.set()
 
 
-async def search_data(event):
+async def search_data(event: asyncio.Event):
     await event.wait()
     # 3. Запрашиваем данные из ES по API
     async with aiohttp.ClientSession() as session:
