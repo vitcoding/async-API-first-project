@@ -14,7 +14,7 @@ from ..settings import es_url, log, redis_url, service_url, test_settings
 #  Любой тест с асинхронными вызовами нужно оборачивать декоратором `pytest.mark.asyncio`, который следит за запуском и работой цикла событий.
 
 
-async def es_load_data(event: asyncio.Event):
+async def es_load_data(event: asyncio.Event) -> None:
     # 1. Генерируем данные для ES
     es_data = [
         {
@@ -89,14 +89,13 @@ async def es_load_data(event: asyncio.Event):
     event.set()
 
 
-async def search_data(event: asyncio.Event):
+async def search_data(event: asyncio.Event, query_data: dict) -> tuple[str]:
     await event.wait()
     log.debug("\nservice_url: \n%s\n", service_url)
 
     # 3. Запрашиваем данные из ES по API
     async with aiohttp.ClientSession() as session:
         url = service_url + "/api/v1/films/search"
-        query_data = {"query": "The Star"}
         async with session.get(url, params=query_data) as response:
             body = await response.json()
             headers = response.headers
@@ -105,12 +104,19 @@ async def search_data(event: asyncio.Event):
     return status, body
 
 
+@pytest.mark.parametrize(
+    "query_data, expected_answer",
+    [
+        ({"query": "The Star"}, {"status": 200, "length": 50}),
+        ({"query": "Mashed potato"}, {"status": 404, "length": 1}),
+    ],
+)
 @pytest.mark.asyncio
-async def test_search():
+async def test_search(query_data, expected_answer):
     event = asyncio.Event()
     await es_load_data(event)
-    status, body = await search_data(event)
+    status, body = await search_data(event, query_data)
 
     # 4. Проверяем ответ
-    assert status == 200
-    assert len(body) == 50
+    assert status == expected_answer["status"]
+    assert len(body) == expected_answer["length"]
