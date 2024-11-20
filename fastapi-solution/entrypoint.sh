@@ -10,7 +10,7 @@ set -e
      sleep 0.5
  done
 
- while ! nc -z $ELASTICSEARCH_HOST $ELASTICSEARCH_PORT; do
+ while ! nc -z $REDIS_HOST $REDIS_PORT; do
      sleep 0.5
  done
 

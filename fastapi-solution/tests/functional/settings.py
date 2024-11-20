@@ -1,10 +1,24 @@
-from pydantic import Field
-from pydantic_settings import BaseSettings
+import logging
+import os
+
+from pydantic.v1 import BaseSettings, Field
+
+# Настройки логера для дебага
+format_log = (
+    "#%(levelname)-8s [%(asctime)s] - %(filename)s:"
+    "%(lineno)d - %(name)s - %(message)s"
+)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format=format_log,
+)
+log = logging.getLogger("DEBUG_LOG")
 
 
-class TestSettings(BaseSettings):
-    # es_host: str = Field("http://127.0.0.1:9200", env="ELASTIC_HOST")
-    es_host: str = Field("http://localhost:9200", env="ELASTIC_HOST")
+class BaseTestSettings(BaseSettings):
+    es_schema: str = Field(default="http://", env="ELASTIC_SCHEMA")
+    es_host: str = Field(default="127.0.0.1", env="ELASTIC_HOST")
+    es_port: int = Field(default=9200, env="ELASTIC_PORT")
     es_index: str = "movies"
     es_id_field: str = Field("id", env="ES_ID_FIELD")
     es_index_mapping: dict = Field(
@@ -40,61 +54,61 @@ class TestSettings(BaseSettings):
                             "name": {"type": "text"},
                         },
                     },
-                    # "created_at": {"type": "date"},
-                    # "updated_at": {"type": "date"},
-                    # "film_work_type": {"type": "keyword"},
                 }
             }
         }
     )
-    # es_index_mapping: dict = Field(
-    #     {
-    #         "mappings": {
-    #             "properties": {
-    #                 "id": {"type": "keyword"},
-    #                 "imdb_rating": {"type": "float"},
-    #                 "genres": {"type": "keyword"},
-    #                 "title": {
-    #                     "type": "text",
-    #                     "analyzer": "ru_en",
-    #                     "fields": {"raw": {"type": "keyword"}},
-    #                 },
-    #                 "description": {"type": "text", "analyzer": "ru_en"},
-    #                 "directors_names": {"type": "text", "analyzer": "ru_en"},
-    #                 "actors_names": {"type": "text", "analyzer": "ru_en"},
-    #                 "writers_names": {"type": "text", "analyzer": "ru_en"},
-    #                 "directors": {
-    #                     "type": "nested",
-    #                     "dynamic": "strict",
-    #                     "properties": {
-    #                         "id": {"type": "keyword"},
-    #                         "name": {"type": "text", "analyzer": "ru_en"},
-    #                     },
-    #                 },
-    #                 "actors": {
-    #                     "type": "nested",
-    #                     "dynamic": "strict",
-    #                     "properties": {
-    #                         "id": {"type": "keyword"},
-    #                         "name": {"type": "text", "analyzer": "ru_en"},
-    #                     },
-    #                 },
-    #                 "writers": {
-    #                     "type": "nested",
-    #                     "dynamic": "strict",
-    #                     "properties": {
-    #                         "id": {"type": "keyword"},
-    #                         "name": {"type": "text", "analyzer": "ru_en"},
-    #                     },
-    #                 },
-    #             }
-    #         }
-    #     }
-    # )
 
-    redis_host: str = Field("http://localhost:6379", env="REDIS_HOST")
-    # service_url: str = Field("localhost:8000", env="SERVICE_URL")
-    service_url: str = Field("http://localhost:8000", env="SERVICE_URL")
+    redis_schema: str = Field(default="http://", env="REDIS_SСHEMA")
+    redis_host: str = Field(default="127.0.0.1", env="REDIS_HOST")
+    redis_port: int = Field(default=6379, env="REDIS_PORT")
+
+    service_schema: str = Field(default="http://", env="SERVICE_SСHEMA")
+    service_host: str = Field(default="127.0.0.1", env="SERVICE_HOST")
+    service_port: int = Field(default=8000, env="SERVICE_PORT")
+
+    class Config:
+        env_file = "dev.env"
+        env_file_encoding = "utf-8"
 
 
-test_settings = TestSettings()
+class TestSettings(BaseTestSettings):
+    class Config:
+        env_file = "doc.env"
+        env_file_encoding = "utf-8"
+
+
+# For local development: export APP_ENV="dev"
+def get_settings() -> BaseSettings:
+    environment = os.environ.get("APP_ENV", "docker")
+    log.debug("\nEnvironment: '%s'\n", environment)
+    if environment == "docker":
+        return TestSettings()
+    if environment == "dev":
+        return BaseTestSettings()
+    else:
+        os.environ["APP_ENV"] = "docker"
+        log.warning(
+            "\nUncorrect 'APP_ENV': \n'%s'.\n"
+            "The default value has been assigned: 'docker'\n",
+            environment,
+        )
+        return TestSettings()
+
+
+test_settings = get_settings()
+
+es_url = (
+    f"{test_settings.es_schema}{test_settings.es_host}"
+    f":{test_settings.es_port}"
+)
+
+redis_url = (
+    f"{test_settings.redis_schema}{test_settings.redis_host}"
+    f":{test_settings.redis_port}"
+)
+
+service_url = (
+    f"{test_settings.service_schema}{test_settings.service_host}"
+    f":{test_settings.service_port}"
+)

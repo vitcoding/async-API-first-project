@@ -1,5 +1,4 @@
 import asyncio
-import datetime
 import uuid
 
 import aiohttp
@@ -7,7 +6,7 @@ import pytest
 from elasticsearch import AsyncElasticsearch
 from elasticsearch.helpers import async_bulk
 
-from ..settings import test_settings
+from ..settings import es_url, log, redis_url, service_url, test_settings
 
 # from tests.functional.settings import test_settings
 
@@ -52,9 +51,9 @@ async def es_load_data(event: asyncio.Event):
     ]
 
     # 2. Загружаем данные в ES
-    es_client = AsyncElasticsearch(
-        hosts=[test_settings.es_host], verify_certs=False
-    )
+    log.debug("\nes_host: \n%s\n", es_url)
+
+    es_client = AsyncElasticsearch(hosts=[es_url], verify_certs=False)
 
     if await es_client.indices.exists(index=test_settings.es_index):
         await es_client.indices.delete(index=test_settings.es_index)
@@ -69,21 +68,21 @@ async def es_load_data(event: asyncio.Event):
     if errors:
         raise Exception("Ошибка записи данных в Elasticsearch")
 
-    es_client = AsyncElasticsearch(
-        hosts=[test_settings.es_host], verify_certs=False
-    )
+    es_client = AsyncElasticsearch(hosts=[es_url], verify_certs=False)
     while True:
         try:
             document_count = await es_client.count(index="movies")
             count = document_count["count"]
             if count == 60:
-                ###
-                print(f"\n\ndocument_count: {document_count}\n")
+                log.debug("\ndocument_count: \n%s\n", document_count)
                 break
             await asyncio.sleep(0.1)
         except Exception as err:
-            ###
-            print(err)
+            log.error(
+                "\nError %s: \n'%s'.\n",
+                type(err),
+                err,
+            )
             # raise err
     await es_client.close()
 
@@ -92,9 +91,11 @@ async def es_load_data(event: asyncio.Event):
 
 async def search_data(event: asyncio.Event):
     await event.wait()
+    log.debug("\nservice_url: \n%s\n", service_url)
+
     # 3. Запрашиваем данные из ES по API
     async with aiohttp.ClientSession() as session:
-        url = test_settings.service_url + "/api/v1/films/search"
+        url = service_url + "/api/v1/films/search"
         query_data = {"query": "The Star"}
         async with session.get(url, params=query_data) as response:
             body = await response.json()

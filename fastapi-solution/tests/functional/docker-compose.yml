@@ -74,7 +74,7 @@ services:
 
   api-service:
     build: ../../.
-    image: fastapi-image
+    # image: fastapi-image
     container_name: fastapi
     env_file:
       - ../../../.env
@@ -87,14 +87,16 @@ services:
     depends_on:
       - elasticsearch
       - redis
-  # tests:
-  #   image: fastapi-image
-  #   container_name: tests
-  #   command: pytest
-  #   # volumes:
-  #   #   - .:/app
-  #   depends_on:
-  #     - api-service
+
+  tests:
+    build: .
+    # image: fastapi-image
+    container_name: tests
+    # command: bash -c "while ! nc -z localhost 8000; do sleep 2; done; pytest"
+    # volumes:
+    #   - .:/app
+    depends_on:
+      - api-service
 
 volumes:
   movies-database:
