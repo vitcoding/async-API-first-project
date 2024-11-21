@@ -15,11 +15,14 @@ from testdata.films import generate_films
 
 
 async def es_load_data(
-    es_write_data, es_check_data, event: asyncio.Event
+    es_write_data,
+    es_check_data,
+    event: asyncio.Event,
+    quantity: int,
+    return_ids: bool = False,
 ) -> None:
 
     index_ = "movies"
-    quantity = 120
     es_data = generate_films(quantity)
 
     bulk_query = [
@@ -29,6 +32,35 @@ async def es_load_data(
     await es_write_data(index_, bulk_query)
 
     await es_check_data(index_, event, quantity)
+
+    if return_ids:
+        films_ids = [row["id"] for row in es_data]
+        return films_ids
+    return None
+
+
+@pytest.mark.parametrize(
+    "query_data, expected_answer",
+    [
+        ({"query": "The Star"}, {"status": 200, "length": 50}),
+        ({"query": "Mashed potato"}, {"status": 404, "length": 1}),
+    ],
+)
+@pytest.mark.asyncio(loop_scope="session")
+async def test_films(
+    es_write_data, es_check_data, make_get_request, query_data, expected_answer
+) -> None:
+    event = asyncio.Event()
+    quantity = 1
+    film_id = await es_load_data(
+        es_write_data, es_check_data, event, quantity, return_ids=True
+    )
+
+    search_urn = f"/api/v1/films/{film_id}"
+    status, _, body = await make_get_request(event, search_urn, query_data)
+
+    assert status == expected_answer["status"]
+    assert len(body) == expected_answer["length"]
 
 
 @pytest.mark.parametrize(
@@ -62,8 +94,8 @@ async def es_load_data(
         #     {"status": 200, "length": 30},
         # ),
         # # films_search
-        ({"query": "The Star"}, {"status": 200, "length": 50}),
-        ({"query": "Mashed potato"}, {"status": 404, "length": 1}),
+        # ({"query": "The Star"}, {"status": 200, "length": 50}),
+        # ({"query": "Mashed potato"}, {"status": 404, "length": 1}),
         # (
         #     {"query": "The Star", "page_size": 50, "page_number": 0},
         #     {"status": 404, "length": 1},
@@ -83,12 +115,14 @@ async def es_load_data(
     ],
 )
 @pytest.mark.asyncio(loop_scope="session")
-async def test_films(
+async def test_films_search(
     es_write_data, es_check_data, make_get_request, query_data, expected_answer
 ) -> None:
     event = asyncio.Event()
-    await es_load_data(es_write_data, es_check_data, event)
+    quantity = 120
+    await es_load_data(es_write_data, es_check_data, event, quantity)
 
+    ### "/api/v1/films/search" for list other
     search_urn = "/api/v1/films/search"
     status, _, body = await make_get_request(event, search_urn, query_data)
 
