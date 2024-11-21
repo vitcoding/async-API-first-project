@@ -1,19 +1,9 @@
-import logging
 import os
 
+from .logger import log
 from pydantic.v1 import BaseSettings, Field
-from testdata.es_mapping import MOVIES_MAPPING
 
-# Настройки логера для дебага
-format_log = (
-    "#%(levelname)-8s [%(asctime)s] - %(filename)s:"
-    "%(lineno)d - %(name)s - %(message)s"
-)
-logging.basicConfig(
-    level=logging.DEBUG,
-    format=format_log,
-)
-log = logging.getLogger("DEBUG_LOG")
+from testdata.es_mapping import MOVIES_MAPPING
 
 
 class BaseTestSettings(BaseSettings):

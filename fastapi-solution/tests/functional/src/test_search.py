@@ -6,7 +6,8 @@ import pytest
 from elasticsearch import AsyncElasticsearch
 from elasticsearch.helpers import async_bulk
 
-from core.settings import es_url, log, redis_url, service_url, test_settings
+from core.logger import log
+from core.settings import es_url, redis_url, service_url, test_settings
 from utils.conftest import es_write_data
 
 # from tests.functional.settings import test_settings
