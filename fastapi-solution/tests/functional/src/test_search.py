@@ -1,23 +1,21 @@
 import asyncio
 import uuid
 
-import aiohttp
 import pytest
-from elasticsearch import AsyncElasticsearch
-from elasticsearch.helpers import async_bulk
 
-from core.logger import log
-from core.settings import es_url, redis_url, service_url, test_settings
-from utils.conftest import es_check_data, es_client, es_write_data, event_loop
-
-#  Название теста должно начинаться со слова `test_`
-#  Любой тест с асинхронными вызовами нужно оборачивать декоратором `pytest.mark.asyncio`, который следит за запуском и работой цикла событий.
+from utils.conftest import (
+    es_check_data,
+    es_client,
+    es_write_data,
+    event_loop,
+    make_get_request,
+)
 
 
 async def es_load_data(
     es_write_data, es_check_data, event: asyncio.Event
 ) -> None:
-    # 1. Генерируем данные для ES
+
     es_data = [
         {
             "id": str(uuid.uuid4()),
@@ -52,25 +50,9 @@ async def es_load_data(
         for row in es_data
     ]
 
-    # 2. Загружаем данные в ES
     await es_write_data(bulk_query)
 
     await es_check_data(event)
-
-
-async def search_data(event: asyncio.Event, query_data: dict) -> tuple[str]:
-    await event.wait()
-    log.debug("\nservice_url: \n%s\n", service_url)
-
-    # 3. Запрашиваем данные из ES по API
-    async with aiohttp.ClientSession() as session:
-        url = service_url + "/api/v1/films/search"
-        async with session.get(url, params=query_data) as response:
-            body = await response.json()
-            headers = response.headers
-            status = response.status
-
-    return status, body
 
 
 @pytest.mark.parametrize(
@@ -82,12 +64,12 @@ async def search_data(event: asyncio.Event, query_data: dict) -> tuple[str]:
 )
 @pytest.mark.asyncio(loop_scope="session")
 async def test_search(
-    es_write_data, es_check_data, query_data, expected_answer
+    es_write_data, es_check_data, make_get_request, query_data, expected_answer
 ) -> None:
     event = asyncio.Event()
     await es_load_data(es_write_data, es_check_data, event)
-    status, body = await search_data(event, query_data)
+    search_urn = "/api/v1/films/search"
+    status, _, body = await make_get_request(event, search_urn, query_data)
 
-    # 4. Проверяем ответ
     assert status == expected_answer["status"]
     assert len(body) == expected_answer["length"]

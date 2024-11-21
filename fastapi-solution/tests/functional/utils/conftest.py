@@ -1,11 +1,12 @@
 import asyncio
 from typing import Callable, Generator
 
+import aiohttp
 import pytest_asyncio
 from elasticsearch import AsyncElasticsearch
 from elasticsearch.helpers import async_bulk
 
-from core.settings import es_url, log, test_settings
+from core.settings import es_url, log, service_url, test_settings
 from testdata.es_mapping import MOVIES_MAPPING
 
 
@@ -68,5 +69,28 @@ def es_check_data(es_client: AsyncElasticsearch) -> Callable:
                 )
 
         event.set()
+
+    return inner
+
+
+@pytest_asyncio.fixture(name="make_get_request")
+def make_get_request() -> Callable:
+
+    async def inner(
+        event: asyncio.Event, service_urn: str, query_data: dict
+    ) -> tuple[int | dict]:
+
+        await event.wait()
+
+        service_uri = service_url + service_urn
+        log.debug("\nservice_uri: \n%s\n", service_uri)
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(service_uri, params=query_data) as response:
+                body = await response.json()
+                headers = response.headers
+                status = response.status
+
+        return status, headers, body
 
     return inner
