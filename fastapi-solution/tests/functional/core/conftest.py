@@ -33,16 +33,12 @@ async def aiohttp_session() -> AsyncGenerator:
 @pytest_asyncio.fixture(name="es_write_data")
 def es_write_data(es_client: AsyncElasticsearch) -> Callable:
 
-    async def inner(data: list[dict]) -> None:
+    async def inner(index_: str, data: list[dict]) -> None:
         log.debug("\nes_url: \n%s\n", es_url)
 
-        index_ = "movies_test"
-
-        if await es_client.indices.exists(index=test_settings.es_index):
-            await es_client.indices.delete(index=test_settings.es_index)
-        await es_client.indices.create(
-            index=test_settings.es_index, **MOVIES_MAPPING
-        )
+        if await es_client.indices.exists(index=index_):
+            await es_client.indices.delete(index=index_)
+        await es_client.indices.create(index=index_, **MOVIES_MAPPING)
 
         updated, errors = await async_bulk(client=es_client, actions=data)
 
@@ -55,13 +51,11 @@ def es_write_data(es_client: AsyncElasticsearch) -> Callable:
 @pytest_asyncio.fixture(name="es_check_data")
 def es_check_data(es_client: AsyncElasticsearch) -> Callable:
 
-    async def inner(event: asyncio.Event) -> None:
-
-        index_ = "movies_test"
+    async def inner(index_: str, event: asyncio.Event) -> None:
 
         while True:
             try:
-                document_count = await es_client.count(index="movies")
+                document_count = await es_client.count(index=index_)
                 count = document_count["count"]
                 if count == 60:
                     log.debug("\ndocument_count: \n%s\n", document_count)

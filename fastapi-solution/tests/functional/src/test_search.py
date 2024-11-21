@@ -17,6 +17,8 @@ async def es_load_data(
     es_write_data, es_check_data, event: asyncio.Event
 ) -> None:
 
+    index_ = "movies"
+
     es_data = [
         {
             "id": str(uuid.uuid4()),
@@ -47,13 +49,12 @@ async def es_load_data(
     ]
 
     bulk_query = [
-        {"_index": "movies", "_id": row["id"], "_source": row}
-        for row in es_data
+        {"_index": index_, "_id": row["id"], "_source": row} for row in es_data
     ]
 
-    await es_write_data(bulk_query)
+    await es_write_data(index_, bulk_query)
 
-    await es_check_data(event)
+    await es_check_data(index_, event)
 
 
 @pytest.mark.parametrize(
@@ -69,6 +70,7 @@ async def test_search(
 ) -> None:
     event = asyncio.Event()
     await es_load_data(es_write_data, es_check_data, event)
+
     search_urn = "/api/v1/films/search"
     status, _, body = await make_get_request(event, search_urn, query_data)
 
