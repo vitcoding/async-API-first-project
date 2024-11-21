@@ -8,16 +8,15 @@ from elasticsearch.helpers import async_bulk
 
 from core.logger import log
 from core.settings import es_url, redis_url, service_url, test_settings
-
-from utils.conftest import es_write_data, es_client
-
-# from tests.functional.settings import test_settings
+from utils.conftest import es_check_data, es_client, es_write_data, event_loop
 
 #  Название теста должно начинаться со слова `test_`
 #  Любой тест с асинхронными вызовами нужно оборачивать декоратором `pytest.mark.asyncio`, который следит за запуском и работой цикла событий.
 
 
-async def es_load_data(es_write_data, event: asyncio.Event) -> None:
+async def es_load_data(
+    es_write_data, es_check_data, event: asyncio.Event
+) -> None:
     # 1. Генерируем данные для ES
     es_data = [
         {
@@ -56,25 +55,7 @@ async def es_load_data(es_write_data, event: asyncio.Event) -> None:
     # 2. Загружаем данные в ES
     await es_write_data(bulk_query)
 
-    es_client = AsyncElasticsearch(hosts=[es_url], verify_certs=False)
-    while True:
-        try:
-            document_count = await es_client.count(index="movies")
-            count = document_count["count"]
-            if count == 60:
-                log.debug("\ndocument_count: \n%s\n", document_count)
-                break
-            await asyncio.sleep(0.1)
-        except Exception as err:
-            log.error(
-                "\nError %s: \n'%s'.\n",
-                type(err),
-                err,
-            )
-            # raise err
-    await es_client.close()
-
-    event.set()
+    await es_check_data(event)
 
 
 async def search_data(event: asyncio.Event, query_data: dict) -> tuple[str]:
@@ -100,9 +81,11 @@ async def search_data(event: asyncio.Event, query_data: dict) -> tuple[str]:
     ],
 )
 @pytest.mark.asyncio
-async def test_search(es_write_data, query_data, expected_answer):
+async def test_search(
+    es_write_data, es_check_data, query_data, expected_answer
+) -> None:
     event = asyncio.Event()
-    await es_load_data(es_write_data, event)
+    await es_load_data(es_write_data, es_check_data, event)
     status, body = await search_data(event, query_data)
 
     # 4. Проверяем ответ
