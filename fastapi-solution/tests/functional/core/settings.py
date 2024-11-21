@@ -1,9 +1,10 @@
 import os
 
-from .logger import log
 from pydantic.v1 import BaseSettings, Field
 
 from testdata.es_mapping import MOVIES_MAPPING
+
+from .logger import log
 
 
 class BaseTestSettings(BaseSettings):
@@ -49,7 +50,7 @@ def get_settings() -> BaseSettings:
         os.environ["APP_ENV"] = "docker"
         log.warning(
             "\nUncorrect 'APP_ENV': \n'%s'.\n"
-            "The default value has been assigned: 'docker'\n",
+            "The default value 'docker' has been assigned.\n",
             environment,
         )
         return TestSettings()

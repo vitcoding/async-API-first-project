@@ -51,13 +51,13 @@ def es_write_data(es_client: AsyncElasticsearch) -> Callable:
 @pytest_asyncio.fixture(name="es_check_data")
 def es_check_data(es_client: AsyncElasticsearch) -> Callable:
 
-    async def inner(index_: str, event: asyncio.Event) -> None:
+    async def inner(index_: str, event: asyncio.Event, quantity: int) -> None:
 
         while True:
             try:
                 document_count = await es_client.count(index=index_)
                 count = document_count["count"]
-                if count == 60:
+                if count == quantity:
                     log.debug("\ndocument_count: \n%s\n", document_count)
                     break
                 await asyncio.sleep(0.1)
