@@ -2,6 +2,7 @@ import logging
 import os
 
 from pydantic.v1 import BaseSettings, Field
+from testdata.es_mapping import MOVIES_MAPPING
 
 # Настройки логера для дебага
 format_log = (
@@ -20,44 +21,12 @@ class BaseTestSettings(BaseSettings):
     es_host: str = Field(default="127.0.0.1", env="ELASTIC_HOST")
     es_port: int = Field(default=9200, env="ELASTIC_PORT")
     es_index: str = "movies"
+
+    ###
     es_id_field: str = Field("id", env="ES_ID_FIELD")
-    es_index_mapping: dict = Field(
-        {
-            "mappings": {
-                "properties": {
-                    "id": {"type": "keyword"},
-                    "imdb_rating": {"type": "float"},
-                    "title": {"type": "text"},
-                    "description": {"type": "text"},
-                    "genres": {"type": "text"},
-                    "directors_names": {"type": "text"},
-                    "actors_names": {"type": "text"},
-                    "writers_names": {"type": "text"},
-                    "directors": {
-                        "type": "nested",
-                        "properties": {
-                            "id": {"type": "keyword"},
-                            "name": {"type": "text"},
-                        },
-                    },
-                    "actors": {
-                        "type": "nested",
-                        "properties": {
-                            "id": {"type": "keyword"},
-                            "name": {"type": "text"},
-                        },
-                    },
-                    "writers": {
-                        "type": "nested",
-                        "properties": {
-                            "id": {"type": "keyword"},
-                            "name": {"type": "text"},
-                        },
-                    },
-                }
-            }
-        }
-    )
+
+    ###
+    es_index_mapping: dict = Field(MOVIES_MAPPING)
 
     redis_schema: str = Field(default="http://", env="REDIS_SСHEMA")
     redis_host: str = Field(default="127.0.0.1", env="REDIS_HOST")
