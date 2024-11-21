@@ -3,7 +3,7 @@ import uuid
 
 import pytest
 
-from utils.conftest import (
+from core.conftest import (
     es_check_data,
     es_client,
     es_write_data,
