@@ -80,7 +80,7 @@ async def search_data(event: asyncio.Event, query_data: dict) -> tuple[str]:
         ({"query": "Mashed potato"}, {"status": 404, "length": 1}),
     ],
 )
-@pytest.mark.asyncio
+@pytest.mark.asyncio(loop_scope="session")
 async def test_search(
     es_write_data, es_check_data, query_data, expected_answer
 ) -> None:

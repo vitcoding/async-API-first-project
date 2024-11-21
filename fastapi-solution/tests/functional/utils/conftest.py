@@ -17,7 +17,7 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 
 
 @pytest_asyncio.fixture(name="es_client", scope="session")
-async def es_client(event_loop: asyncio.AbstractEventLoop):
+async def es_client():
     es_client = AsyncElasticsearch(hosts=[es_url], verify_certs=False)
     yield es_client
     await es_client.close()
