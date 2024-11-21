@@ -1,5 +1,5 @@
 import asyncio
-from typing import Callable, Generator
+from typing import AsyncGenerator, Callable, Generator
 
 import aiohttp
 import pytest_asyncio
@@ -18,10 +18,16 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 
 
 @pytest_asyncio.fixture(name="es_client", scope="session")
-async def es_client():
+async def es_client() -> AsyncGenerator:
     es_client = AsyncElasticsearch(hosts=[es_url], verify_certs=False)
     yield es_client
     await es_client.close()
+
+
+@pytest_asyncio.fixture(name="aiohttp_session", scope="session")
+async def aiohttp_session() -> AsyncGenerator:
+    async with aiohttp.ClientSession() as session:
+        yield session
 
 
 @pytest_asyncio.fixture(name="es_write_data")
@@ -74,7 +80,7 @@ def es_check_data(es_client: AsyncElasticsearch) -> Callable:
 
 
 @pytest_asyncio.fixture(name="make_get_request")
-def make_get_request() -> Callable:
+def make_get_request(aiohttp_session) -> Callable:
 
     async def inner(
         event: asyncio.Event, service_urn: str, query_data: dict
@@ -85,11 +91,12 @@ def make_get_request() -> Callable:
         service_uri = service_url + service_urn
         log.debug("\nservice_uri: \n%s\n", service_uri)
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(service_uri, params=query_data) as response:
-                body = await response.json()
-                headers = response.headers
-                status = response.status
+        async with aiohttp_session.get(
+            service_uri, params=query_data
+        ) as response:
+            body = await response.json()
+            headers = response.headers
+            status = response.status
 
         return status, headers, body
 

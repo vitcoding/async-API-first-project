@@ -4,6 +4,7 @@ import uuid
 import pytest
 
 from core.conftest import (
+    aiohttp_session,
     es_check_data,
     es_client,
     es_write_data,
