@@ -8,7 +8,8 @@ from elasticsearch.helpers import async_bulk
 
 from core.logger import log
 from core.settings import es_url, redis_url, service_url, test_settings
-from utils.conftest import es_write_data
+
+from utils.conftest import es_write_data, es_client
 
 # from tests.functional.settings import test_settings
 
