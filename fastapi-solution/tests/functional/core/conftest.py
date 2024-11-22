@@ -77,13 +77,16 @@ def es_check_data(es_client: AsyncElasticsearch) -> Callable:
 def make_get_request(aiohttp_session) -> Callable:
 
     async def inner(
-        event: asyncio.Event, service_urn: str, query_data: dict
+        event: asyncio.Event, service_urn: str, query_data: dict = None
     ) -> tuple[int | dict]:
 
         await event.wait()
 
         service_uri = service_url + service_urn
         log.debug("\nservice_uri: \n%s\n", service_uri)
+
+        if query_data is None:
+            query_data = {}
 
         async with aiohttp_session.get(
             service_uri, params=query_data
