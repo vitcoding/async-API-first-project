@@ -33,3 +33,13 @@ MOVIES_MAPPING = {
         }
     }
 }
+
+GENRES_MAPPING = {
+    "mappings": {
+        "properties": {
+            "id": {"type": "keyword"},
+            "name": {"type": "text"},
+            "description": {"type": "text"},
+        }
+    }
+}

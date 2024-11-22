@@ -1,5 +1,5 @@
 import uuid
-from random import random, randrange
+from random import random
 
 
 def generate_films(quantity):
@@ -7,9 +7,9 @@ def generate_films(quantity):
         {
             "id": str(uuid.uuid4()),
             "imdb_rating": round(random() * 10, 1),
-            "genres": ["Action", "Sci-Fi"],
             "title": "The Star",
             "description": "New World",
+            "genres": ["Action", "Sci-Fi"],
             "directors_names": ["Stan"],
             "actors_names": ["Ann", "Bob"],
             "writers_names": ["Ben", "Howard"],

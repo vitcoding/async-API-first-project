@@ -57,7 +57,6 @@ async def test_films(
     )
     if len(film_ids) > 0:
         film_id = film_ids[0]
-        print(film_id)
 
     search_urn = f"/api/v1/films/{film_id}"
     status, _, body = await make_get_request(event, search_urn)
