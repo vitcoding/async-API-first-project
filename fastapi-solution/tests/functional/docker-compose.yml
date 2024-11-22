@@ -1,18 +1,18 @@
 name: movie-theatre-tests
 
 services:
-  movies-db:
-    image: postgres:16
-    env_file:
-      - ../../../.env
-    volumes:
-      - movies-database:/var/lib/postgresql/data
-      - ../../../data/database_dump.sql:/docker-entrypoint-initdb.d/init.sql
-    expose:
-      - 5432
-    ports:
-      - 5432:5432
-    restart: always
+  # movies-db:
+  #   image: postgres:16
+  #   env_file:
+  #     - ../../../.env
+  #   volumes:
+  #     - movies-database:/var/lib/postgresql/data
+  #     - ../../../data/database_dump.sql:/docker-entrypoint-initdb.d/init.sql
+  #   expose:
+  #     - 5432
+  #   ports:
+  #     - 5432:5432
+  #   restart: always
 
   elasticsearch:
     image: elasticsearch:8.6.2
@@ -31,14 +31,14 @@ services:
       - 9200:9200
     restart: always
 
-  etl:
-    build: ./etl
-    env_file:
-      - ../../../.env
-    depends_on:
-      - movies-db
-      - elasticsearch
-      - redis
+  # etl:
+  #   build: ./etl
+  #   env_file:
+  #     - ../../../.env
+  #   depends_on:
+  #     - movies-db
+  #     - elasticsearch
+  #     - redis
 
   redis:
     image: redis
@@ -52,29 +52,8 @@ services:
       - redis.conf:/usr/local/etc/redis/redis.conf
     restart: always
 
-  # nginx:
-  #   image: nginx:alpine3.18
-  #   ports:
-  #     - 8000:80
-  #   volumes:
-  #     - ../../../data/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-  #     - ../../../data/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
-
-  # api-service:
-  #   build: ../../.
-  #   image: fastapi-image
-  #   env_file:
-  #     - ../../../.env
-  #   expose:
-  #     - 8000
-  #   depends_on:
-  #     - elasticsearch
-  #     - redis
-  #     - nginx
-
   api-service:
     build: ../../.
-    # image: fastapi-image
     container_name: fastapi
     env_file:
       - ../../../.env
@@ -82,19 +61,13 @@ services:
       - 8000
     ports:
       - 8000:8000
-    # volumes:
-    #   - .:/app
     depends_on:
       - elasticsearch
       - redis
 
   tests:
     build: .
-    # image: fastapi-image
     container_name: tests
-    # command: bash -c "while ! nc -z localhost 8000; do sleep 2; done; pytest"
-    # volumes:
-    #   - .:/app
     depends_on:
       - api-service
 

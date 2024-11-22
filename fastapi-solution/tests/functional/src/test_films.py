@@ -14,6 +14,7 @@ from core.conftest import (
 )
 from testdata.films import generate_films
 from testdata.films_queries import films_list_queries, films_search_queries
+from testdata.genres import genre_action
 
 
 async def es_load_data(
@@ -86,6 +87,14 @@ async def test_films_list(
     expected_answer,
 ) -> None:
     """Test films list function."""
+
+    await es_write_data(
+        "genres",
+        [
+            {"_index": "genres", "_id": row["id"], "_source": row}
+            for row in genre_action
+        ],
+    )
 
     event = asyncio.Event()
     quantity = 120

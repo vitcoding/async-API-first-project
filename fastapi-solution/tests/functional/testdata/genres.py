@@ -13,3 +13,12 @@ def generate_genres(quantity):
     ]
 
     return genres
+
+
+genre_action = [
+    {
+        "id": "6c162475-c7ed-4461-9184-001ef3d9f26e",
+        "name": "Action",
+        "description": None,
+    }
+]
