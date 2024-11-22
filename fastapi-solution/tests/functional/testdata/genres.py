@@ -6,7 +6,7 @@ def generate_genres(quantity):
     genres = [
         {
             "id": str(uuid.uuid4()),
-            "name": choice(("Action", "Sci-Fi", "Drama")),
+            "name": choice(("Comedy", "Fantasy", "Thriller")),
             "description": None,
         }
         for _ in range(quantity)
