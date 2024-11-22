@@ -22,6 +22,7 @@ async def es_load_data(
     quantity: int,
     return_ids: bool = False,
 ) -> None | list[str]:
+    """Async function for loading data to Elasticsearch"""
 
     index_ = "movies"
     es_data = generate_films(quantity)
@@ -47,6 +48,8 @@ async def test_films(
     make_get_request,
     redis_get_data,
 ) -> None:
+    """Test film function"""
+
     event = asyncio.Event()
     quantity = 5
     film_ids = await es_load_data(
@@ -129,6 +132,8 @@ async def test_films_list(
     query_data,
     expected_answer,
 ) -> None:
+    """Test films list function"""
+
     event = asyncio.Event()
     quantity = 120
     await es_load_data(es_write_data, es_check_data, event, quantity)
@@ -191,6 +196,8 @@ async def test_films_search(
     query_data,
     expected_answer,
 ) -> None:
+    """Test films search function"""
+
     event = asyncio.Event()
     quantity = 120
     await es_load_data(es_write_data, es_check_data, event, quantity)
