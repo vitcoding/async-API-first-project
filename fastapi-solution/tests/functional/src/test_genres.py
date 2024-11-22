@@ -13,6 +13,7 @@ from core.conftest import (
     redis_get_data,
 )
 from testdata.genres import generate_genres
+from testdata.genres_queries import genres_queries
 
 
 async def es_load_data(
@@ -74,21 +75,7 @@ async def test_genres(
     assert cashed_data == False
 
 
-@pytest.mark.parametrize(
-    "query_data, expected_answer",
-    [
-        ({}, {"status": 200, "length": 10, "cashed_data": True}),
-        (
-            {"page_size": 7},
-            {"status": 200, "length": 7, "cashed_data": True},
-        ),
-        ({"page_size": 0}, {"status": 422, "length": 1, "cashed_data": False}),
-        (
-            {"page_number": 2},
-            {"status": 404, "length": 1, "cashed_data": False},
-        ),
-    ],
-)
+@pytest.mark.parametrize("query_data, expected_answer", genres_queries)
 @pytest.mark.asyncio(loop_scope="session")
 async def test_genres_list(
     es_write_data,
