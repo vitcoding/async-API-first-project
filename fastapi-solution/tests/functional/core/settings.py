@@ -13,12 +13,6 @@ class BaseTestSettings(BaseSettings):
     es_port: int = Field(default=9200, env="ELASTIC_PORT")
     es_index: str = "movies"
 
-    ###
-    es_id_field: str = Field("id", env="ES_ID_FIELD")
-
-    ###
-    es_index_mapping: dict = Field(MOVIES_MAPPING)
-
     redis_schema: str = Field(default="http://", env="REDIS_SСHEMA")
     redis_host: str = Field(default="127.0.0.1", env="REDIS_HOST")
     redis_port: int = Field(default=6379, env="REDIS_PORT")

@@ -1,3 +1,5 @@
+# Not in use
+
 import time
 
 from elasticsearch import Elasticsearch

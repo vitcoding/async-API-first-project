@@ -60,7 +60,7 @@ async def test_films(
         film_id = film_ids[0]
 
     search_urn = f"/api/v1/films/{film_id}"
-    status, _, body = await make_get_request(event, search_urn)
+    status, _, _ = await make_get_request(event, search_urn)
     assert status == 200
     key = f"Film: id: {str(film_id)}"
     cashed_data = await redis_get_data(key)
@@ -68,7 +68,7 @@ async def test_films(
 
     film_id_wrong = f"{film_id}none"
     search_urn = f"/api/v1/films/{film_id_wrong}"
-    status, _, body = await make_get_request(event, search_urn)
+    status, _, _ = await make_get_request(event, search_urn)
     assert status == 404
     key = f"Film: id: {str(film_id_wrong)}"
     cashed_data = await redis_get_data(key)
