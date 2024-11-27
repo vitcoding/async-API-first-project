@@ -72,8 +72,8 @@ services:
       - api-service
 
 volumes:
-  movies-database:
-  es-data:
-  etl-data:
+  # movies-database:
+  es-data: # etl-data:
+
   rds-data:
   redis.conf:
