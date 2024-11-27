@@ -1,7 +1,7 @@
 def get_query(
-    page_size: int = None,
-    page_number: int = None,
-    sort_field: str | None = None,
+        page_size: int = None,
+        page_number: int = None,
+        sort_field: str | None = None,
 ) -> dict:
     query_body = {}
 

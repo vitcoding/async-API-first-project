@@ -8,7 +8,8 @@ from elasticsearch.helpers import async_bulk
 from redis.asyncio import Redis
 
 from core.settings import es_url, log, redis_url, service_url, test_settings
-from testdata.es_mapping import MOVIES_MAPPING
+from testdata.es_mapping import ES_MAPPING
+from utils.backoff import backoff
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -53,7 +54,7 @@ def es_write_data(es_client: AsyncElasticsearch) -> Callable:
 
         if await es_client.indices.exists(index=index_):
             await es_client.indices.delete(index=index_)
-        await es_client.indices.create(index=index_, **MOVIES_MAPPING)
+        await es_client.indices.create(index=index_, **ES_MAPPING[index_])
 
         updated, errors = await async_bulk(client=es_client, actions=data)
 
@@ -93,6 +94,7 @@ def es_check_data(es_client: AsyncElasticsearch) -> Callable:
 def redis_get_data(redis_client: Redis) -> Callable:
     """Redis get data fixture."""
 
+    @backoff()
     async def inner(key: str) -> None:
         log.debug("\nredis_url: \n%s\n", redis_url)
 
@@ -100,8 +102,7 @@ def redis_get_data(redis_client: Redis) -> Callable:
             cached_data = await redis_client.get(key)
 
         except:
-            cached_data = None
-            # Exception("Error reading data from Redis")
+            Exception("Error reading data from Redis")
 
         result = True if cached_data is not None else False
         return result
@@ -113,6 +114,7 @@ def redis_get_data(redis_client: Redis) -> Callable:
 def make_get_request(aiohttp_session) -> Callable:
     """API request fixture."""
 
+    @backoff()
     async def inner(
         event: asyncio.Event, service_urn: str, query_data: dict = None
     ) -> tuple[int | dict]:

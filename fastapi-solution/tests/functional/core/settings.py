@@ -2,8 +2,6 @@ import os
 
 from pydantic.v1 import BaseSettings, Field
 
-from testdata.es_mapping import MOVIES_MAPPING
-
 from .logger import log
 
 
@@ -34,6 +32,8 @@ class TestSettings(BaseTestSettings):
 
 # For local development: export APP_ENV="dev"
 def get_settings() -> BaseSettings:
+    """The configuration function of the settings."""
+
     environment = os.environ.get("APP_ENV", "docker")
     log.debug("\nEnvironment: '%s'\n", environment)
     if environment == "docker":

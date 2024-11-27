@@ -12,9 +12,9 @@ from core.conftest import (
     redis_client,
     redis_get_data,
 )
-from testdata.films import generate_films
-from testdata.films_queries import films_list_queries, films_search_queries
-from testdata.genres import genre_action
+from testdata.films import person_in_films
+from testdata.persons import generate_persons
+from testdata.persons_queries import persons_search_queries
 from utils.backoff import backoff
 
 
@@ -28,103 +28,92 @@ async def es_load_data(
 ) -> None | list[str]:
     """Async function for loading data to Elasticsearch."""
 
-    index_ = "movies"
-    es_data = generate_films(quantity)
+    index_ = "persons"
+    es_data = generate_persons(quantity)
 
     bulk_query = [
         {"_index": index_, "_id": row["id"], "_source": row} for row in es_data
     ]
 
     await es_write_data(index_, bulk_query)
-
     await es_check_data(index_, event, quantity)
 
     if return_ids:
-        films_ids = [row["id"] for row in es_data]
-        return films_ids
+        person_ids = [row["id"] for row in es_data]
+        return person_ids
     return None
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_films(
+async def test_person(
     es_write_data,
     es_check_data,
     make_get_request,
     redis_get_data,
 ) -> None:
-    """Test film function."""
+    """Test person function."""
 
     event = asyncio.Event()
     quantity = 5
-    film_ids = await es_load_data(
+    person_ids = await es_load_data(
         es_write_data, es_check_data, event, quantity, return_ids=True
     )
-    if film_ids is not None and len(film_ids) > 0:
-        film_id = film_ids[0]
+    if person_ids is not None and len(person_ids) > 0:
+        person_id = person_ids[0]
 
-    search_urn = f"/api/v1/films/{film_id}"
+    search_urn = f"/api/v1/persons/{person_id}"
     status, _, _ = await make_get_request(event, search_urn)
     assert status == 200
-    key = f"Film: id: {str(film_id)}"
+    key = f"Person: id: {str(person_id)}"
     cashed_data = await redis_get_data(key)
     assert cashed_data == True
 
-    film_id_wrong = f"{film_id}none"
-    search_urn = f"/api/v1/films/{film_id_wrong}"
+    person_id_wrong = f"{person_id}none"
+    search_urn = f"/api/v1/persons/{person_id_wrong}"
     status, _, _ = await make_get_request(event, search_urn)
     assert status == 404
-    key = f"Film: id: {str(film_id_wrong)}"
+    key = f"Person: id: {str(person_id_wrong)}"
     cashed_data = await redis_get_data(key)
     assert cashed_data == False
 
 
-@pytest.mark.parametrize("query_data, expected_answer", films_list_queries)
 @pytest.mark.asyncio(loop_scope="session")
-async def test_films_list(
+async def test_person_films(
     es_write_data,
     es_check_data,
     make_get_request,
     redis_get_data,
-    query_data,
-    expected_answer,
 ) -> None:
-    """Test films list function."""
-
-    await es_write_data(
-        "genres",
-        [
-            {"_index": "genres", "_id": row["id"], "_source": row}
-            for row in genre_action
-        ],
-    )
+    """Test person function."""
 
     event = asyncio.Event()
-    quantity = 120
-    await es_load_data(es_write_data, es_check_data, event, quantity)
-
-    search_urn = "/api/v1/films"
-    status, _, body = await make_get_request(event, search_urn, query_data)
-
-    assert status == expected_answer["status"]
-    assert len(body) == expected_answer["length"]
-
-    sort_field_value = query_data.get("sort_field", "-imdb_rating")
-    page_size_value = query_data.get("page_size", 50)
-    page_number_value = query_data.get("page_number", 1)
-    genre_uuid_value = query_data.get("genre", None)
-    key = (
-        f"FilmList: sort: {sort_field_value}, "
-        f"size: {page_size_value}, "
-        f"page: {page_number_value}, "
-        f"genre_uuid: {genre_uuid_value}"
+    quantity = 5
+    person_ids = await es_load_data(
+        es_write_data, es_check_data, event, quantity, return_ids=True
     )
+    if person_ids is not None and len(person_ids) > 0:
+        person_id = person_ids[0]
+
+    person_id = person_in_films["id"]
+    search_urn = f"/api/v1/persons/{person_id}/film"
+    status, _, _ = await make_get_request(event, search_urn)
+    assert status == 200
+    key = f"PersonFilms: id: {str(person_id)}"
     cashed_data = await redis_get_data(key)
-    assert cashed_data == expected_answer["cashed_data"]
+    assert cashed_data == True
+
+    person_id_wrong = f"{person_id}none"
+    search_urn = f"/api/v1/persons/{person_id_wrong}"
+    status, _, _ = await make_get_request(event, search_urn)
+    assert status == 404
+    key = f"PersonFilms: id: {str(person_id_wrong)}"
+    cashed_data = await redis_get_data(key)
+    assert cashed_data == False
 
 
-@pytest.mark.parametrize("query_data, expected_answer", films_search_queries)
+@pytest.mark.parametrize("query_data, expected_answer", persons_search_queries)
 @pytest.mark.asyncio(loop_scope="session")
-async def test_films_search(
+async def test_persons_search(
     es_write_data,
     es_check_data,
     make_get_request,
@@ -132,13 +121,13 @@ async def test_films_search(
     query_data,
     expected_answer,
 ) -> None:
-    """Test films search function."""
+    """Test persons search function."""
 
     event = asyncio.Event()
-    quantity = 120
+    quantity = 10
     await es_load_data(es_write_data, es_check_data, event, quantity)
 
-    search_urn = "/api/v1/films/search"
+    search_urn = "/api/v1/persons/search"
     status, _, body = await make_get_request(event, search_urn, query_data)
 
     assert status == expected_answer["status"]
@@ -148,7 +137,7 @@ async def test_films_search(
     page_size_value = query_data.get("page_size", 50)
     page_number_value = query_data.get("page_number", 1)
     key = (
-        f"FilmSearch: {query_value}, "
+        f"PersonSearch: {query_value}, "
         f"size: {page_size_value}, "
         f"page: {page_number_value}"
     )

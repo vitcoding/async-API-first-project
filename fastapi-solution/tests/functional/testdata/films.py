@@ -1,8 +1,12 @@
 import uuid
 from random import random
 
+person_in_films = {"id": "ef86b8ff-3c82-4d31-ad8e-72b69f4e3f95", "name": "Ann"}
+
 
 def generate_films(quantity):
+    """The function of generating movies for tests."""
+
     films = [
         {
             "id": str(uuid.uuid4()),
@@ -14,11 +18,11 @@ def generate_films(quantity):
             "actors_names": ["Ann", "Bob"],
             "writers_names": ["Ben", "Howard"],
             "directors": [
-                {"id": "ef86b8ff-3c82-4d31-ad8e-72b69f4e3f95", "name": "Ann"},
+                person_in_films,
                 {"id": "fb111f22-121e-44a7-b78f-b19191810fbf", "name": "Bob"},
             ],
             "actors": [
-                {"id": "ef86b8ff-3c82-4d31-ad8e-72b69f4e3f95", "name": "Ann"},
+                person_in_films,
                 {"id": "fb111f22-121e-44a7-b78f-b19191810fbf", "name": "Bob"},
             ],
             "writers": [

@@ -3,6 +3,8 @@ from random import choice
 
 
 def generate_genres(quantity):
+    """The function of generating genres for tests."""
+
     genres = [
         {
             "id": str(uuid.uuid4()),

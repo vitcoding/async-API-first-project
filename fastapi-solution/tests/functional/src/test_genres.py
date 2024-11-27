@@ -14,8 +14,10 @@ from core.conftest import (
 )
 from testdata.genres import generate_genres
 from testdata.genres_queries import genres_queries
+from utils.backoff import backoff
 
 
+@backoff()
 async def es_load_data(
     es_write_data,
     es_check_data,
@@ -56,7 +58,7 @@ async def test_genres(
     genre_ids = await es_load_data(
         es_write_data, es_check_data, event, quantity, return_ids=True
     )
-    if len(genre_ids) > 0:
+    if genre_ids is not None and len(genre_ids) > 0:
         genre_id = genre_ids[0]
 
     search_urn = f"/api/v1/genres/{genre_id}"

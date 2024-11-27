@@ -9,6 +9,8 @@ from db.elastic import get_elastic
 from db.redis import get_redis
 from models.film import Film
 from services.abstracts import AbstractItemService
+from services.cache_service import CacheService
+from services.elasticsearch_service import ElasticsearchService
 
 
 class FilmService(AbstractItemService):
@@ -20,12 +22,12 @@ class FilmService(AbstractItemService):
         log.info("\nGetting film '%s'.\n", film_id)
 
         key = f"Film: id: {str(film_id)}"
-        film = await self._get_from_cache(key, "film")
+        film = await self.get_from_cache(key, "film")
         if not film:
             film = await self._get_item_from_elastic(film_id)
             if not film:
                 return None
-            await self._put_to_cache(key, film, "film")
+            await self.put_to_cache(key, film, "film")
 
         return film
 
@@ -34,7 +36,7 @@ class FilmService(AbstractItemService):
 
         try:
             log.info("\nGetting film from elasticsearch.\n")
-            doc = await self.elastic.get(index="movies", id=film_id)
+            doc = await self.es_service.get(index="movies", id=film_id)
         except NotFoundError:
             return None
 
@@ -43,8 +45,10 @@ class FilmService(AbstractItemService):
 
 @lru_cache()
 def get_film_service(
-    redis: Redis = Depends(get_redis),
-    elastic: AsyncElasticsearch = Depends(get_elastic),
+        redis: Redis = Depends(get_redis),
+        elastic: AsyncElasticsearch = Depends(get_elastic),
 ) -> FilmService:
     """Провайдер FilmService."""
-    return FilmService(redis, elastic)
+    cache_service = CacheService(redis)
+    es_service = ElasticsearchService(elastic)
+    return FilmService(cache_service, es_service)

@@ -9,26 +9,28 @@ from db.elastic import get_elastic
 from db.redis import get_redis
 from models.film import Film
 from models.person import Person, PersonBase
-from services.abstracts import AbstractListService
+from services.abstracts import AbstractListService, PersonFilmsMixin
+from services.cache_service import CacheService
+from services.elasticsearch_service import ElasticsearchService
 from services.es_queries import common
 from services.tools.person_films_dict import films_dict
 
 
-class PersonListSearchService(AbstractListService):
+class PersonListSearchService(AbstractListService, PersonFilmsMixin):
     """Класс для полнотекстового поиска персон."""
 
     async def get_list(
-        self,
-        query: str | None,
-        page_size: int,
-        page_number: int,
+            self,
+            query: str | None,
+            page_size: int,
+            page_number: int,
     ) -> list[Film] | None:
         """Основной метод получения списка персон."""
 
         log.info("\nGetting persons.\n")
 
         key = f"PersonSearch: {query}, size: {page_size}, page: {page_number}"
-        persons = await self._get_from_cache(key, "person", is_list=True)
+        persons = await self.get_from_cache(key, "person", is_list=True)
         if not persons:
             persons = await self._get_list_from_elastic(
                 query, page_size, page_number
@@ -37,24 +39,22 @@ class PersonListSearchService(AbstractListService):
             if not persons:
                 return None
 
-            await self._put_to_cache(key, persons, "person")
+            await self.put_to_cache(key, persons, "person")
 
         return persons
 
     async def _get_list_from_elastic(
-        self,
-        query: str | None,
-        page_size: int,
-        page_number: int,
+            self,
+            query: str | None,
+            page_size: int,
+            page_number: int,
     ) -> list[Person] | None:
         """Метод получения списка персон из elasticsearch."""
 
         index_ = "persons"
-        docs_total = await self._docs_total(index_)
-        pages_total = await self._pages_total(docs_total, page_size)
-        page_size = await self._validate_pages(
-            docs_total, page_number, pages_total, page_size
-        )
+        docs_total = await self.es_service.count(index_)
+        pages_total = await self.get_pages_total(docs_total, page_size)
+        page_size = await self.validate_pages(docs_total, page_number, pages_total, page_size)
 
         query_body = common.get_query(page_size, page_number, None)
 
@@ -72,12 +72,12 @@ class PersonListSearchService(AbstractListService):
 
         try:
             log.info("\nSearching persons from elasticsearch\n")
-            docs = await self.elastic.search(
+            docs = await self.es_service.search(
                 index=index_,
                 body=query_body,
             )
             persons_query = [
-                PersonBase(**doc["_source"]) for doc in docs["hits"]["hits"]
+                PersonBase(**doc["_source"]) for doc in docs
             ]
 
             persons = []
@@ -97,15 +97,17 @@ class PersonListSearchService(AbstractListService):
         except NotFoundError:
             return None
 
-        log.debug("\ndocs: \n%s\n", docs["hits"]["hits"])
+        log.debug("\ndocs: \n%s\n", docs)
 
         return persons
 
 
 @lru_cache()
 def get_person_list_search_service(
-    redis: Redis = Depends(get_redis),
-    elastic: AsyncElasticsearch = Depends(get_elastic),
+        redis: Redis = Depends(get_redis),
+        elastic: AsyncElasticsearch = Depends(get_elastic),
 ) -> PersonListSearchService:
     """PersonListSearchService."""
-    return PersonListSearchService(redis, elastic)
+    cache_service = CacheService(redis)
+    es_service = ElasticsearchService(elastic)
+    return PersonListSearchService(cache_service, es_service)

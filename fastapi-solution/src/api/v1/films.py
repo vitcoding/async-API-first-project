@@ -42,11 +42,11 @@ class Film(BaseModel):
     tags=["Список кинопроизведений"],
 )
 async def film_list(
-    sort: str | None = Query("-imdb_rating"),
-    page_size: int = Query(50, ge=1),
-    page_number: int = Query(1),
-    genre: str = Query(None),
-    film_service: FilmListService = Depends(get_film_list_service),
+        sort: str | None = Query("-imdb_rating"),
+        page_size: int = Query(50, ge=1),
+        page_number: int = Query(1),
+        genre: str = Query(None),
+        film_service: FilmListService = Depends(get_film_list_service),
 ) -> list[FilmList]:
     films = await film_service.get_list(sort, page_size, page_number, genre)
     if not films:
@@ -65,12 +65,12 @@ async def film_list(
     tags=["Полнотекстовый поиск"],
 )
 async def search_film_list(
-    query: str | None = Query(None),
-    page_size: int = Query(50, ge=1),
-    page_number: int = Query(1),
-    film_service: FilmListSearchService = Depends(
-        get_film_list_search_service
-    ),
+        query: str | None = Query(None),
+        page_size: int = Query(50, ge=1),
+        page_number: int = Query(1),
+        film_service: FilmListSearchService = Depends(
+            get_film_list_search_service
+        ),
 ) -> list[FilmList]:
     films = await film_service.get_list(query, page_size, page_number)
     if not films:
@@ -86,12 +86,10 @@ async def search_film_list(
     summary="Кинопроизведение",
     description="Данные по кинопроизведению",
     response_description="Название, рейтинг, оисание, жанры "
-    + "и роли кинопроизведения",
+                         + "и роли кинопроизведения",
     tags=["Кинопроизведение"],
 )
-async def film_details(
-    film_id: str, film_service: FilmService = Depends(get_film_service)
-) -> Film:
+async def film_details(film_id: str, film_service: FilmService = Depends(get_film_service)) -> Film:
     film = await film_service.get_by_id(film_id)
     if not film:
         raise HTTPException(
