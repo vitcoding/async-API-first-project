@@ -1,8 +1,10 @@
 import uuid
 from random import choice
 
+index_ = "genres"
 
-def generate_genres(quantity):
+
+def generate_genres(quantity: int = 1) -> list[dict]:
     """The function of generating genres for tests."""
 
     genres = [

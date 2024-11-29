@@ -20,6 +20,7 @@ def backoff(
         aiohttp.ServerDisconnectedError,
         client_exceptions.ClientConnectorError,
         client_exceptions.ContentTypeError,
+        UnboundLocalError,
     ),
 ) -> Callable:
     """The connection recovery waiting decorator."""

@@ -1,8 +1,10 @@
 import uuid
 from random import choice
 
+index_ = "persons"
 
-def generate_persons(quantity):
+
+def generate_persons(quantity: int = 1) -> list[dict]:
     """The function of generating persons for tests."""
 
     persons = [

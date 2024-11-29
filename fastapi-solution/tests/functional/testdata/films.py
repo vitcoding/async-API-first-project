@@ -3,8 +3,10 @@ from random import random
 
 person_in_films = {"id": "ef86b8ff-3c82-4d31-ad8e-72b69f4e3f95", "name": "Ann"}
 
+index_ = "movies"
 
-def generate_films(quantity):
+
+def generate_films(quantity: int = 1) -> list[dict]:
     """The function of generating movies for tests."""
 
     films = [

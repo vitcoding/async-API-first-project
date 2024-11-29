@@ -3,10 +3,10 @@ from typing import AsyncGenerator, Callable, Generator
 
 import aiohttp
 import pytest_asyncio
-from elasticsearch import AsyncElasticsearch
-from elasticsearch.helpers import async_bulk
-from redis.asyncio import Redis
 
+from core.abstract import CacheClient, SearchClient
+from core.elasticsearch_client import ElasticsearchClient
+from core.redis_client import RedisCacheClient
 from core.settings import es_url, log, redis_url, service_url, test_settings
 from testdata.es_mapping import ES_MAPPING
 from utils.backoff import backoff
@@ -23,7 +23,7 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 @pytest_asyncio.fixture(name="es_client", scope="session")
 async def es_client() -> AsyncGenerator:
     """Elasticsearch connection fixture."""
-    es_client = AsyncElasticsearch(hosts=[es_url], verify_certs=False)
+    es_client = ElasticsearchClient(hosts=[es_url], verify_certs=False)
     yield es_client
     await es_client.close()
 
@@ -31,11 +31,11 @@ async def es_client() -> AsyncGenerator:
 @pytest_asyncio.fixture(name="redis_client", scope="session")
 async def redis_client() -> AsyncGenerator:
     """Redis connection fixture."""
-    redis_client = Redis(
+    redis_client = RedisCacheClient(
         host=test_settings.redis_host, port=test_settings.redis_port
     )
     yield redis_client
-    await redis_client.aclose()
+    await redis_client.close()
 
 
 @pytest_asyncio.fixture(name="aiohttp_session", scope="session")
@@ -46,17 +46,20 @@ async def aiohttp_session() -> AsyncGenerator:
 
 
 @pytest_asyncio.fixture(name="es_write_data")
-def es_write_data(es_client: AsyncElasticsearch) -> Callable:
+def es_write_data(es_client: SearchClient) -> Callable:
     """Elasticsearch write data fixture."""
 
+    @backoff()
     async def inner(index_: str, data: list[dict]) -> None:
         log.debug("\nes_url: \n%s\n", es_url)
 
-        if await es_client.indices.exists(index=index_):
-            await es_client.indices.delete(index=index_)
-        await es_client.indices.create(index=index_, **ES_MAPPING[index_])
+        if await es_client.index_exists(index=index_):
+            await es_client.delete_index(index=index_)
+        await es_client.create_index(index=index_, settings=ES_MAPPING[index_])
 
-        updated, errors = await async_bulk(client=es_client, actions=data)
+        updated, errors = await es_client.bulk_write(
+            actions=data, refresh="wait_for"
+        )
 
         if errors:
             raise Exception("Error writing data to Elasticsearch")
@@ -64,34 +67,8 @@ def es_write_data(es_client: AsyncElasticsearch) -> Callable:
     return inner
 
 
-@pytest_asyncio.fixture(name="es_check_data")
-def es_check_data(es_client: AsyncElasticsearch) -> Callable:
-    """Elasticsearch check data fixture."""
-
-    async def inner(index_: str, event: asyncio.Event, quantity: int) -> None:
-
-        while True:
-            try:
-                document_count = await es_client.count(index=index_)
-                count = document_count["count"]
-                if count == quantity:
-                    log.debug("\ndocument_count: \n%s\n", document_count)
-                    break
-                await asyncio.sleep(0.1)
-            except Exception as err:
-                log.error(
-                    "\nError %s: \n'%s'.\n",
-                    type(err),
-                    err,
-                )
-
-        event.set()
-
-    return inner
-
-
 @pytest_asyncio.fixture(name="redis_get_data")
-def redis_get_data(redis_client: Redis) -> Callable:
+def redis_get_data(redis_client: CacheClient) -> Callable:
     """Redis get data fixture."""
 
     @backoff()
@@ -116,11 +93,8 @@ def make_get_request(aiohttp_session) -> Callable:
 
     @backoff()
     async def inner(
-        event: asyncio.Event, service_urn: str, query_data: dict = None
+        service_urn: str, query_data: dict = None
     ) -> tuple[int | dict]:
-
-        await event.wait()
-
         service_uri = service_url + service_urn
         log.debug("\nservice_uri: \n%s\n", service_uri)
 

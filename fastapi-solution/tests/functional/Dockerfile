@@ -15,6 +15,8 @@ RUN apt-get update \
 COPY entrypoint.sh /
 RUN chmod +x /entrypoint.sh
 
+ENV PYTHONPATH="${PYTHONPATH}:/opt/tests"
+
 COPY . .
 
 ENTRYPOINT ["/entrypoint.sh"]
